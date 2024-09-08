@@ -1,0 +1,323 @@
+import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import * as fs from 'fs/promises';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+interface User {
+  username: string;
+  passwordHash: string;
+  databases: number[];
+}
+
+@Injectable()
+export class StorageService implements OnModuleInit, OnModuleDestroy {
+  private databases: Map<number, Map<string, string[]>> = new Map();
+  private users: Map<string, User> = new Map();
+  private walFile: string = 'wal.log';
+  private snapshotFile: string = 'snapshot.json';
+  private usersFile: string = 'users.json';
+  private walStream: fs.FileHandle | null = null;
+
+  constructor(private jwtService: JwtService) {}
+
+  async onModuleInit() {
+    await this.loadSnapshot();
+    await this.loadUsers();
+    await this.replayWAL();
+    this.walStream = await fs.open(this.walFile, 'a');
+  }
+
+  async onModuleDestroy() {
+    await this.createSnapshot();
+    await this.saveUsers();
+    await this.walStream?.close();
+  }
+
+  private async loadSnapshot() {
+    try {
+      const data = await fs.readFile(this.snapshotFile, 'utf-8');
+      const parsedData = JSON.parse(data);
+      this.databases = new Map(Object.entries(parsedData).map(([key, value]) => [Number(key), new Map(Object.entries(value))]));
+    } catch (error) {
+      console.log('No snapshot found or error loading snapshot');
+    }
+  }
+
+  private async loadUsers() {
+    try {
+      const data = await fs.readFile(this.usersFile, 'utf-8');
+      const parsedData = JSON.parse(data);
+      this.users = new Map(Object.entries(parsedData));
+    } catch (error) {
+      console.log('No users file found or error loading users');
+    }
+  }
+
+  private async replayWAL() {
+    try {
+      const data = await fs.readFile(this.walFile, 'utf-8');
+      const lines = data.split('\n').filter(line => line.trim() !== '');
+      for (const line of lines) {
+        const [operation, ...args] = JSON.parse(line);
+        switch (operation) {
+          case 'set':
+            this.set(args[0], Number(args[1]), args[2], args[3]);
+            break;
+          case 'incr':
+            this.incr(args[0], Number(args[1]), args[2]);
+            break;
+          case 'sadd':
+            this.sadd(args[0], Number(args[1]), args[2], ...args.slice(3));
+            break;
+          case 'del':
+            this.del(args[0], Number(args[1]), ...args.slice(2));
+            break;
+          case 'expire':
+            this.expire(args[0], Number(args[1]), args[2], Number(args[3]));
+            break;
+          case 'rpush':
+            this.rpush(args[0], Number(args[1]), args[2], ...args.slice(3));
+            break;
+          case 'lpop':
+            this.lpop(args[0], Number(args[1]), args[2]);
+            break;
+        }
+      }
+    } catch (error) {
+      console.log('No WAL found or error replaying WAL');
+    }
+  }
+
+  private async appendToWAL(operation: string, ...args: any[]) {
+    const logEntry = JSON.stringify([operation, ...args]) + '\n';
+    await this.walStream?.write(logEntry);
+  }
+
+  private async createSnapshot() {
+    const snapshotData = JSON.stringify(Object.fromEntries(Array.from(this.databases.entries()).map(([key, value]) => [key, Object.fromEntries(value)])));
+    await fs.writeFile(this.snapshotFile, snapshotData);
+    await fs.truncate(this.walFile, 0);
+  }
+
+  private async saveUsers() {
+    const userData = JSON.stringify(Object.fromEntries(this.users));
+    await fs.writeFile(this.usersFile, userData);
+  }
+
+  async createUser(username: string, password: string): Promise<void> {
+    if (this.users.has(username)) {
+      throw new Error('User already exists');
+    }
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const newUser: User = {
+      username,
+      passwordHash,
+      databases: [],
+    };
+    this.users.set(username, newUser);
+    await this.saveUsers();
+  }
+
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = this.users.get(username);
+    if (user && await bcrypt.compare(password, user.passwordHash)) {
+      const { passwordHash, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+
+  async login(user: any) {
+    const payload = { username: user.username, sub: user.userId };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
+
+  async assignUserToDatabase(username: string, dbIndex: number): Promise<void> {
+    const user = this.users.get(username);
+    if (!user) throw new Error('User not found');
+    if (!user.databases.includes(dbIndex)) {
+      user.databases.push(dbIndex);
+      await this.saveUsers();
+    }
+  }
+
+  private getDatabase(dbIndex: number): Map<string, string[]> {
+    if (!this.databases.has(dbIndex)) {
+      this.databases.set(dbIndex, new Map());
+    }
+    return this.databases.get(dbIndex)!;
+  }
+
+  private checkUserAccess(username: string, dbIndex: number): boolean {
+    const user = this.users.get(username);
+    return user ? user.databases.includes(dbIndex) : false;
+  }
+
+  async rpush(username: string, dbIndex: number, key: string, ...values: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    if (!db.has(key)) {
+      db.set(key, []);
+    }
+    const list = db.get(key)!;
+    list.push(...values);
+    await this.appendToWAL('rpush', username, dbIndex, key, ...values);
+    return list.length;
+  }
+
+  lrange(username: string, dbIndex: number, key: string, start: number, stop: number): string[] {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const list = db.get(key) || [];
+    if (start < 0) start = Math.max(list.length + start, 0);
+    if (stop < 0) stop = Math.max(list.length + stop, 0);
+    stop = Math.min(stop, list.length - 1);
+    return list.slice(start, stop + 1);
+  }
+
+  async lpop(username: string, dbIndex: number, key: string): Promise<string | null> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const list = db.get(key);
+    if (!list || list.length === 0) {
+      return null;
+    }
+    const item = list.shift()!;
+    await this.appendToWAL('lpop', username, dbIndex, key);
+    return item;
+  }
+
+  llen(username: string, dbIndex: number, key: string): number {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return db.get(key)?.length || 0;
+  }
+
+
+  // String Operations
+  async set(username: string, dbIndex: number, key: string, value: string): Promise<'OK'> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    db.set(key, value);
+    await this.appendToWAL('set', username, dbIndex, key, value);
+    return 'OK';
+  }
+
+  get(username: string, dbIndex: number, key: string): string | null {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return db.get(key) || null;
+  }
+
+  async incr(username: string, dbIndex: number, key: string): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let value = db.get(key);
+    if (value === undefined) {
+      value = 0;
+    } else if (typeof value !== 'number') {
+      throw new Error('Value is not a number');
+    }
+    value++;
+    db.set(key, value);
+    await this.appendToWAL('incr', username, dbIndex, key);
+    return value;
+  }
+
+  // Set Operations
+  async sadd(username: string, dbIndex: number, key: string, ...members: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let set = db.get(key);
+    if (!set || !(set instanceof Set)) {
+      set = new Set();
+      db.set(key, set);
+    }
+    const initialSize = set.size;
+    members.forEach(member => set.add(member));
+    const addedCount = set.size - initialSize;
+    await this.appendToWAL('sadd', username, dbIndex, key, ...members);
+    return addedCount;
+  }
+
+  smembers(username: string, dbIndex: number, key: string): string[] {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const set = db.get(key);
+    return set instanceof Set ? Array.from(set) : [];
+  }
+
+  sismember(username: string, dbIndex: number, key: string, member: string): boolean {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const set = db.get(key);
+    return set instanceof Set ? set.has(member) : false;
+  }
+
+  // Key Management
+  async del(username: string, dbIndex: number, ...keys: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let count = 0;
+    for (const key of keys) {
+      if (db.delete(key)) {
+        count++;
+      }
+    }
+    await this.appendToWAL('del', username, dbIndex, ...keys);
+    return count;
+  }
+
+  exists(username: string, dbIndex: number, ...keys: string[]): number {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return keys.filter(key => db.has(key)).length;
+  }
+
+  async expire(username: string, dbIndex: number, key: string, seconds: number): Promise<boolean> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    if (!db.has(key)) {
+      return false;
+    }
+    setTimeout(() => {
+      db.delete(key);
+    }, seconds * 1000);
+    await this.appendToWAL('expire', username, dbIndex, key, seconds);
+    return true;
+  }
+
+  async triggerSnapshot(): Promise<void> {
+    await this.createSnapshot();
+    await this.saveUsers();
+  }
+}

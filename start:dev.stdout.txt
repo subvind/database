@@ -1,10 +1,49 @@
-c[[90m11:19:40 AM[0m] Starting compilation in watch mode...
+c[[90m11:55:55 AM[0m] Starting compilation in watch mode...
 
-[[90m11:19:40 AM[0m] Found 0 errors. Watching for file changes.
+[96msrc/storage/storage.service.ts[0m:[93m214[0m:[93m17[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string' is not assignable to parameter of type 'string[]'.
 
-[32m[Nest] 374360  - [39m09/08/2024, 11:19:41 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 374360  - [39m09/08/2024, 11:19:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +6ms[39m
-[32m[Nest] 374360  - [39m09/08/2024, 11:19:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/}:[39m[38;5;3m +2ms[39m
-[32m[Nest] 374360  - [39m09/08/2024, 11:19:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 374360  - [39m09/08/2024, 11:19:41 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
-Database is running: http://localhost:6969
+[7m214[0m     db.set(key, value);
+[7m   [0m [91m                ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m224[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'string[]' is not assignable to type 'string'.
+
+[7m224[0m     return db.get(key) || null;
+[7m   [0m [91m    ~~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m234[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string[]'.
+
+[7m234[0m       value = 0;
+[7m   [0m [91m      ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m238[0m:[93m5[0m - [91merror[0m[90m TS2356: [0mAn arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
+
+[7m238[0m     value++;
+[7m   [0m [91m    ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m241[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'string[]' is not assignable to type 'number'.
+
+[7m241[0m     return value;
+[7m   [0m [91m    ~~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m252[0m:[93m7[0m - [91merror[0m[90m TS2740: [0mType 'Set<unknown>' is missing the following properties from type 'string[]': length, pop, push, concat, and 24 more.
+
+[7m252[0m       set = new Set();
+[7m   [0m [91m      ~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m255[0m:[93m29[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
+
+[7m255[0m     const initialSize = set.size;
+[7m   [0m [91m                            ~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m256[0m:[93m35[0m - [91merror[0m[90m TS2339: [0mProperty 'add' does not exist on type 'string[]'.
+
+[7m256[0m     members.forEach(member => set.add(member));
+[7m   [0m [91m                                  ~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m257[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
+
+[7m257[0m     const addedCount = set.size - initialSize;
+[7m   [0m [91m                           ~~~~[0m
+
+[[90m11:55:57 AM[0m] Found 9 errors. Watching for file changes.
+
