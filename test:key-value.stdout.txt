@@ -1,0 +1,27 @@
+Creating user and getting access token...
+Assigning user to database 0...
+Testing set and get operations...
+Set response status: 201
+Set response text: OK
+Get response status: 200
+Get response text: testvalue
+Testing increment operation: starting from 1...
+Increment response status: 201
+Increment response text: 2
+Get incremented value status: 200
+Get incremented value text: 2
+Testing delete operation...
+Delete response status: 201
+Delete response text: 1
+Get deleted key status: 200
+Get deleted key text: 
+Testing exists operation...
+Exists response status: 200
+Exists response text: 2
+Testing expiration operation...
+Expire response status: 201
+Expire response text: true
+Waiting for 2 seconds...
+Get expired key status: 200
+Get expired key text: 
+All tests completed successfully.

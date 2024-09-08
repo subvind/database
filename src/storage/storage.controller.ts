@@ -3,7 +3,7 @@ import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LocalAuthGuard } from '../auth/local-auth.guard';
 
-@Controller('redis-clone')
+@Controller('storage')
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 

@@ -13,9 +13,9 @@ interface User {
 export class StorageService implements OnModuleInit, OnModuleDestroy {
   private databases: Map<number, Map<string, any>> = new Map();
   private users: Map<string, User> = new Map();
-  private walFile: string = 'wal.log';
-  private snapshotFile: string = 'snapshot.json';
-  private usersFile: string = 'users.json';
+  private walFile: string = './data/wal.log';
+  private snapshotFile: string = './data/snapshot.json';
+  private usersFile: string = './data/users.json';
   private walStream: fs.FileHandle | null = null;
 
   constructor(private jwtService: JwtService) {}

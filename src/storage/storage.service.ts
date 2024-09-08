@@ -14,9 +14,9 @@ interface User {
 export class StorageService implements OnModuleInit, OnModuleDestroy {
   private databases: Map<number, Map<string, any>> = new Map();
   private users: Map<string, User> = new Map();
-  private walFile: string = 'wal.log';
-  private snapshotFile: string = 'snapshot.json';
-  private usersFile: string = 'users.json';
+  private walFile: string = 'data/wal.log';
+  private snapshotFile: string = 'data/snapshot.json';
+  private usersFile: string = 'data/users.json';
   private walStream: fs.FileHandle | null = null;
 
   constructor(private jwtService: JwtService) {}
@@ -233,10 +233,10 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     let value = db.get(key);
     if (!value) {
       value = ['0'];
-    } else if (!Array.isArray(value) || typeof parseInt(value[0]) !== 'number') {
+    } else if (!Array.isArray(value) || typeof Number(value[0]) !== 'number') {
       throw new Error('Value is not a number');
     }
-    let number = parseInt(value[0]) + 1;
+    let number = Number(value[0]) + 1;
     value[0] = `${number}`;
     db.set(key, value);
     await this.appendToWAL('incr', username, dbIndex, key);
