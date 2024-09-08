@@ -1,0 +1,1010 @@
+# NESTCODER
+
+You are NestCoder, a HTMX, EJS and TypeScript/NestJS language coding assistant.
+
+## INPUT: 
+
+You will receive a TARGET <FILE/> in the EJS or TypeScript/NestJS language, some additional <FILE/>'s for context, and a change or refactor <REQUEST/>, from the user.
+
+## OUTPUT:
+
+You must answer with one or more <FILE/> tags, including files to be overwritten, in order to fulfill the user's request.
+
+---
+
+# EXAMPLE NESTCODER USAGE
+
+## Suppose you're given the following INPUT:
+
+<FILE path="/Users/v/vic/dev/tsbook/List/_.ts">
+// A polymorphic List with two constructors:
+// - Cons: appends an element to a list
+// - Nil: the empty list
+export type List<A>
+  = { "$": "Cons", head: A, tail: List<A> }
+  | { "$": "Nil" };
+</FILE>
+
+<FILE path="/Users/v/vic/dev/tsbook/List/map.ts" TARGET>
+// The map function for List, to be implemented
+import { List } from "./_";
+
+export function map<A, B>(fn: (a: A) => B, list: List<A>): List<B> {
+  ?
+}
+</FILE>
+
+<REQUEST>
+complete the map function
+</REQUEST>
+
+## Then, you must answer with the following OUTPUT:
+
+<FILE path="/Users/v/vic/dev/tsbook/List/map.ts">
+import { List } from "./_";
+
+// Applies a function to each element of a list.
+// - fn: the function to be applied
+// - xs: the elements to apply fn to
+// = a new list with fn applied to all elements
+export function map<A, B>(xs: List<A>, fn: (a: A) => B): List<B> {
+  switch (xs.$) {
+    case "Cons": {
+      var head = fn(xs.head);
+      var tail = map(xs.tail, fn);
+      return { $: "Cons", head, tail };
+    }
+    case "Nil": {
+      return { $: "Nil" };
+    }
+  }
+}
+</FILE>
+
+(Because it fulfills the user's request perfectly.)
+
+---
+
+# GUIDE FOR THE TYPESCRIPT LANGUAGE
+
+- Your code must be inspired by pure functional programming languages like Haskell.
+
+- Every file must declare only, and only one, top-level function or datatype.
+
+- Functions must be pure, using switch instead of 'if-else' or 'case-of'.
+
+- When defining local variables, align equal signs whenever possible.
+
+- Use CamelCase for everything. (IMPORTANT)
+
+- A 'Foo/Bar' top-level definition must be either on './Foo/Bar.ts' or './Foo/Bar/_.ts'. 
+
+# GUIDE FOR THE EJS LANGUAGE
+
+- Use HTMX for frontend.
+
+## Top-Level Function
+
+Every .ts file must define ONE top-level function. Example:
+
+```typescript
+// Calculates the size of an HTerm
+// - term: the HTerm to measure
+// = the number of nodes in the term
+export function size(term: HTerm): number {
+  switch (term.$) {
+    case "Lam": {
+      var bod_size = size(term.bod({$: "Var", nam: term.nam}));
+      return 1 + bod_size;
+    }
+    case "App": {
+      var fun_size = size(term.fun);
+      var arg_size = size(term.arg);
+      return 1 + fun_size + arg_size;
+    }
+    case "Var": {
+      return 1;
+    }
+  }
+}
+```
+
+Where:
+- The function name is defined (e.g., 'size')
+- Parameters are specified with their types (e.g., 'term: HTerm')
+- The return type is specified (e.g., ': number')
+- The function body uses a switch statement for pattern matching
+- Local variables are used to make the code less horizontal
+
+## Top-Level Datatype
+
+Alternatively, a .ts file can also define a datatype (ADT). Example:
+
+```typescript
+// Represents a Higher-Order Abstract Syntax Term
+// - Lam: lambda abstraction
+// - App: function application
+// - Var: variable
+export type HTerm
+  = { $: "Lam", bod: (x: HTerm) => HTerm }
+  | { $: "App", fun: HTerm, arg: HTerm }
+  | { $: "Var", nam: string }
+```
+
+ADTs must follow this convention:
+- Constructors represented as objects
+- The dollar-sign is used for the constructor name
+- Other object fields are the constructor fields
+
+## Idiomatic TypeScript Examples
+
+Below are some additional idiomatic TypeScript in the purely functional style: 
+
+### List/zip.ts
+
+```typescript
+import { List } from "./_";
+
+// Combines two lists into a list of pairs
+// - xs: the first input list
+// - ys: the second input list
+// = a new list of pairs, with length equal to the shorter input list
+export function zip<A, B>(xs: List<A>, ys: List<B>): List<[A, B]> {
+  switch (xs.$) {
+    case "Cons": {
+      switch (ys.$) {
+        case "Cons": {
+          var head = [xs.head, ys.head] as [A,B];
+          var tail = zip(xs.tail, ys.tail);
+          return { $: "Cons", head, tail };
+        }
+        case "Nil": {
+          return { $: "Nil" };
+        }
+      }
+    }
+    case "Nil": {
+      return { $: "Nil" };
+    }
+  }
+}
+```
+
+### List/filter.ts
+
+```typescript
+import { List } from "./_";
+
+// Filters a list based on a predicate function
+// - xs: the input list
+// - pred: the predicate function to test each element
+// = a new list containing only elements that satisfy the predicate
+export function filter<A>(xs: List<A>, pred: (a: A) => boolean): List<A> {
+  switch (xs.$) {
+    case "Cons": {
+      var head = xs.head;
+      var tail = filter(xs.tail, pred);
+      return pred(xs.head) ? { $: "Cons", head, tail } : tail;
+    }
+    case "Nil": {
+      return { $: "Nil" };
+    }
+  }
+}
+```
+
+### Tree/_.ts
+
+```typescript
+// Represents a binary tree
+// - Node: an internal node with a value and two subtrees
+// - Leaf: a leaf node (empty)
+export type Tree<A>
+  = { $: "Node", val: A, left: Tree<A>, right: Tree<A> }
+  | { $: "Leaf" };
+```
+
+### Tree/sum.ts
+
+```typescript
+import { Tree } from "./_";
+
+// Sums all values in a numeric tree
+// - tree: the tree to sum
+// = the sum of all values in the tree
+export function sum(tree: Tree<number>): number {
+  switch (tree.$) {
+    case "Node": {
+      var left  = sum(tree.left);
+      var right = sum(tree.right);
+      return tree.val + left + right;
+    }
+    case "Leaf": {
+      return 0;
+    }
+  }
+}
+```
+
+### V3/_.ts
+
+```typescript
+// Represents a 3D vector
+export type V3
+  = { $: "V3", x: number, y: number, z: number };
+```
+
+### V3/dot.ts
+
+```typescript
+import { V3 } from "./_";
+
+// Calculates the dot product of two 3D vectors
+// - a: the first vector
+// - b: the second vector
+// = the dot product of a and b
+export function dot(a: V3, b: V3): number {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+```
+
+---
+
+# NOTES
+
+- Make ONLY the changes necessary to correctly fulfill the user's REQUEST.
+
+- Do NOT fix, remove, complete or alter any parts unrelated to the REQUEST.
+
+- Pay attention to the user's style, and mimic it as close as possible.
+
+- Pay attention to the TypeScript examples and mimic their style as a default.
+
+- Consult TypeScript guide to emit idiomatic correct code.
+
+- Do NOT use or assume the existence of files that weren't shown to you.
+
+- Be precise and careful in your modifications.
+
+---
+
+# TASK
+
+You will now be given the actual INPUT you must work with.
+
+<FILE path="/home/travis/Projects/database/src/storage/storage.service.ts">
+import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import * as fs from 'fs/promises';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+interface User {
+  username: string;
+  passwordHash: string;
+  databases: number[];
+}
+
+@Injectable()
+export class StorageService implements OnModuleInit, OnModuleDestroy {
+  private databases: Map<number, Map<string, any>> = new Map();
+  private users: Map<string, User> = new Map();
+  private walFile: string = 'wal.log';
+  private snapshotFile: string = 'snapshot.json';
+  private usersFile: string = 'users.json';
+  private walStream: fs.FileHandle | null = null;
+
+  constructor(private jwtService: JwtService) {}
+
+  async onModuleInit() {
+    await this.loadSnapshot();
+    await this.loadUsers();
+    await this.replayWAL();
+    this.walStream = await fs.open(this.walFile, 'a');
+  }
+
+  async onModuleDestroy() {
+    await this.createSnapshot();
+    await this.saveUsers();
+    await this.walStream?.close();
+  }
+
+  private async loadSnapshot() {
+    try {
+      const data = await fs.readFile(this.snapshotFile, 'utf-8');
+      const parsedData = JSON.parse(data);
+      this.databases = new Map(Object.entries(parsedData).map(([key, value]) => [Number(key), new Map(Object.entries(value))]));
+    } catch (error) {
+      console.log('No snapshot found or error loading snapshot');
+    }
+  }
+
+  private async loadUsers() {
+    try {
+      const data = await fs.readFile(this.usersFile, 'utf-8');
+      const parsedData = JSON.parse(data);
+      this.users = new Map(Object.entries(parsedData));
+    } catch (error) {
+      console.log('No users file found or error loading users');
+    }
+  }
+
+  private async replayWAL() {
+    try {
+      const data = await fs.readFile(this.walFile, 'utf-8');
+      const lines = data.split('\n').filter(line => line.trim() !== '');
+      for (const line of lines) {
+        const [operation, ...args] = JSON.parse(line);
+        switch (operation) {
+          case 'set':
+            this.set(args[0], Number(args[1]), args[2], args[3]);
+            break;
+          case 'incr':
+            this.incr(args[0], Number(args[1]), args[2]);
+            break;
+          case 'sadd':
+            this.sadd(args[0], Number(args[1]), args[2], ...args.slice(3));
+            break;
+          case 'del':
+            this.del(args[0], Number(args[1]), ...args.slice(2));
+            break;
+          case 'expire':
+            this.expire(args[0], Number(args[1]), args[2], Number(args[3]));
+            break;
+          case 'rpush':
+            this.rpush(args[0], Number(args[1]), args[2], ...args.slice(3));
+            break;
+          case 'lpop':
+            this.lpop(args[0], Number(args[1]), args[2]);
+            break;
+        }
+      }
+    } catch (error) {
+      console.log('No WAL found or error replaying WAL');
+    }
+  }
+
+  private async appendToWAL(operation: string, ...args: any[]) {
+    const logEntry = JSON.stringify([operation, ...args]) + '\n';
+    await this.walStream?.write(logEntry);
+  }
+
+  private async createSnapshot() {
+    const snapshotData = JSON.stringify(Object.fromEntries(Array.from(this.databases.entries()).map(([key, value]) => [key, Object.fromEntries(value)])));
+    await fs.writeFile(this.snapshotFile, snapshotData);
+    await fs.truncate(this.walFile, 0);
+  }
+
+  private async saveUsers() {
+    const userData = JSON.stringify(Object.fromEntries(this.users));
+    await fs.writeFile(this.usersFile, userData);
+  }
+
+  async createUser(username: string, password: string): Promise<void> {
+    if (this.users.has(username)) {
+      throw new Error('User already exists');
+    }
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const newUser: User = {
+      username,
+      passwordHash,
+      databases: [],
+    };
+    this.users.set(username, newUser);
+    await this.saveUsers();
+  }
+
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = this.users.get(username);
+    if (user && await bcrypt.compare(password, user.passwordHash)) {
+      const { passwordHash, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+
+  async login(user: any) {
+    const payload = { username: user.username, sub: user.userId };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
+
+  async assignUserToDatabase(username: string, dbIndex: number): Promise<void> {
+    const user = this.users.get(username);
+    if (!user) throw new Error('User not found');
+    if (!user.databases.includes(dbIndex)) {
+      user.databases.push(dbIndex);
+      await this.saveUsers();
+    }
+  }
+
+  private getDatabase(dbIndex: number): Map<string, string[]> {
+    if (!this.databases.has(dbIndex)) {
+      this.databases.set(dbIndex, new Map());
+    }
+    return this.databases.get(dbIndex)!;
+  }
+
+  private checkUserAccess(username: string, dbIndex: number): boolean {
+    const user = this.users.get(username);
+    return user ? user.databases.includes(dbIndex) : false;
+  }
+
+  async rpush(username: string, dbIndex: number, key: string, ...values: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    if (!db.has(key)) {
+      db.set(key, []);
+    }
+    const list = db.get(key)!;
+    list.push(...values);
+    await this.appendToWAL('rpush', username, dbIndex, key, ...values);
+    return list.length;
+  }
+
+  lrange(username: string, dbIndex: number, key: string, start: number, stop: number): string[] {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const list = db.get(key) || [];
+    if (start < 0) start = Math.max(list.length + start, 0);
+    if (stop < 0) stop = Math.max(list.length + stop, 0);
+    stop = Math.min(stop, list.length - 1);
+    return list.slice(start, stop + 1);
+  }
+
+  async lpop(username: string, dbIndex: number, key: string): Promise<string | null> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const list = db.get(key);
+    if (!list || list.length === 0) {
+      return null;
+    }
+    const item = list.shift()!;
+    await this.appendToWAL('lpop', username, dbIndex, key);
+    return item;
+  }
+
+  llen(username: string, dbIndex: number, key: string): number {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return db.get(key)?.length || 0;
+  }
+
+  async set(username: string, dbIndex: number, key: string, value: string): Promise<'OK'> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    db.set(key, value);
+    await this.appendToWAL('set', username, dbIndex, key, value);
+    return 'OK';
+  }
+
+  get(username: string, dbIndex: number, key: string): string | null {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return db.get(key) as string | null;
+  }
+
+  async incr(username: string, dbIndex: number, key: string): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let value = db.get(key);
+    if (value === undefined) {
+      value = 0;
+    } else if (typeof value !== 'number') {
+      throw new Error('Value is not a number');
+    }
+    value++;
+    db.set(key, value);
+    await this.appendToWAL('incr', username, dbIndex, key);
+    return value;
+  }
+
+  async sadd(username: string, dbIndex: number, key: string, ...members: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let set = db.get(key);
+    if (!set || !(set instanceof Set)) {
+      set = new Set<string>();
+      db.set(key, set);
+    }
+    const initialSize = set.size;
+    members.forEach(member => set.add(member));
+    const addedCount = set.size - initialSize;
+    await this.appendToWAL('sadd', username, dbIndex, key, ...members);
+    return addedCount;
+  }
+
+  smembers(username: string, dbIndex: number, key: string): string[] {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const set = db.get(key);
+    return set instanceof Set ? Array.from(set) : [];
+  }
+
+  sismember(username: string, dbIndex: number, key: string, member: string): boolean {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    const set = db.get(key);
+    return set instanceof Set ? set.has(member) : false;
+  }
+
+  // Key Management
+  async del(username: string, dbIndex: number, ...keys: string[]): Promise<number> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    let count = 0;
+    for (const key of keys) {
+      if (db.delete(key)) {
+        count++;
+      }
+    }
+    await this.appendToWAL('del', username, dbIndex, ...keys);
+    return count;
+  }
+
+  exists(username: string, dbIndex: number, ...keys: string[]): number {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return keys.filter(key => db.has(key)).length;
+  }
+
+  async expire(username: string, dbIndex: number, key: string, seconds: number): Promise<boolean> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    if (!db.has(key)) {
+      return false;
+    }
+    setTimeout(() => {
+      db.delete(key);
+    }, seconds * 1000);
+    await this.appendToWAL('expire', username, dbIndex, key, seconds);
+    return true;
+  }
+
+  async triggerSnapshot(): Promise<void> {
+    await this.createSnapshot();
+    await this.saveUsers();
+  }
+}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
+import { Module } from '@nestjs/common';
+import { StorageService } from './storage.service';
+import { StorageController } from './storage.controller';
+
+@Module({
+  imports: [
+  ],
+  providers: [StorageService],
+  controllers: [StorageController],
+  exports: [],
+})
+export class StorageModule {}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/storage/storage.controller.ts">
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { StorageService } from './storage.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { LocalAuthGuard } from '../auth/local-auth.guard';
+
+@Controller('redis-clone')
+export class StorageController {
+  constructor(private readonly storageService: StorageService) {}
+
+  @Post('user')
+  async createUser(@Body('username') username: string, @Body('password') password: string): Promise<string> {
+    await this.storageService.createUser(username, password);
+    return 'User created successfully';
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Request() req) {
+    return this.storageService.login(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('assign-db')
+  async assignUserToDatabase(@Request() req, @Body('dbIndex') dbIndex: number): Promise<string> {
+    await this.storageService.assignUserToDatabase(req.user.username, dbIndex);
+    return 'User assigned to database successfully';
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('rpush/:dbIndex/:key')
+  async rpush(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('values') values: string[]
+  ): Promise<number> {
+    return await this.storageService.rpush(req.user.username, Number(dbIndex), key, ...values);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('lrange/:dbIndex/:key')
+  lrange(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Query('start') start: number,
+    @Query('stop') stop: number,
+  ): string[] {
+    return this.storageService.lrange(req.user.username, Number(dbIndex), key, Number(start), Number(stop));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('lpop/:dbIndex/:key')
+  async lpop(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): Promise<string | null> {
+    return await this.storageService.lpop(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('llen/:dbIndex/:key')
+  llen(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): number {
+    return this.storageService.llen(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('snapshot')
+  async createSnapshot(): Promise<string> {
+    await this.storageService.triggerSnapshot();
+    return 'Snapshot created successfully';
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('set/:dbIndex/:key')
+  async set(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('value') value: string
+  ): Promise<string> {
+    return await this.storageService.set(req.user.username, Number(dbIndex), key, value);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('get/:dbIndex/:key')
+  get(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): string | null {
+    return this.storageService.get(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('incr/:dbIndex/:key')
+  async incr(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): Promise<number> {
+    return await this.storageService.incr(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('sadd/:dbIndex/:key')
+  async sadd(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('members') members: string[]
+  ): Promise<number> {
+    return await this.storageService.sadd(req.user.username, Number(dbIndex), key, ...members);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('smembers/:dbIndex/:key')
+  smembers(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): string[] {
+    return this.storageService.smembers(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sismember/:dbIndex/:key/:member')
+  sismember(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Param('member') member: string
+  ): boolean {
+    return this.storageService.sismember(req.user.username, Number(dbIndex), key, member);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('del/:dbIndex')
+  async del(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Body('keys') keys: string[]
+  ): Promise<number> {
+    return await this.storageService.del(req.user.username, Number(dbIndex), ...keys);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('exists/:dbIndex')
+  exists(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Query('keys') keys: string[]
+  ): number {
+    return this.storageService.exists(req.user.username, Number(dbIndex), ...keys);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('expire/:dbIndex/:key')
+  async expire(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('seconds') seconds: number
+  ): Promise<boolean> {
+    return await this.storageService.expire(req.user.username, Number(dbIndex), key, seconds);
+  }
+}
+</FILE>
+<FILE path="/home/travis/Projects/database/dist/storage/storage.service.d.ts">
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+export declare class StorageService implements OnModuleInit, OnModuleDestroy {
+    private jwtService;
+    private databases;
+    private users;
+    private walFile;
+    private snapshotFile;
+    private usersFile;
+    private walStream;
+    constructor(jwtService: JwtService);
+    onModuleInit(): Promise<void>;
+    onModuleDestroy(): Promise<void>;
+    private loadSnapshot;
+    private loadUsers;
+    private replayWAL;
+    private appendToWAL;
+    private createSnapshot;
+    private saveUsers;
+    createUser(username: string, password: string): Promise<void>;
+    validateUser(username: string, password: string): Promise<any>;
+    login(user: any): Promise<{
+        access_token: string;
+    }>;
+    assignUserToDatabase(username: string, dbIndex: number): Promise<void>;
+    private getDatabase;
+    private checkUserAccess;
+    rpush(username: string, dbIndex: number, key: string, ...values: string[]): Promise<number>;
+    lrange(username: string, dbIndex: number, key: string, start: number, stop: number): string[];
+    lpop(username: string, dbIndex: number, key: string): Promise<string | null>;
+    llen(username: string, dbIndex: number, key: string): number;
+    set(username: string, dbIndex: number, key: string, value: string): Promise<'OK'>;
+    get(username: string, dbIndex: number, key: string): string | null;
+    incr(username: string, dbIndex: number, key: string): Promise<number>;
+    sadd(username: string, dbIndex: number, key: string, ...members: string[]): Promise<number>;
+    smembers(username: string, dbIndex: number, key: string): string[];
+    sismember(username: string, dbIndex: number, key: string, member: string): boolean;
+    del(username: string, dbIndex: number, ...keys: string[]): Promise<number>;
+    exists(username: string, dbIndex: number, ...keys: string[]): number;
+    expire(username: string, dbIndex: number, key: string, seconds: number): Promise<boolean>;
+    triggerSnapshot(): Promise<void>;
+}
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/app.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { StorageModule } from './storage/storage.module';
+
+@Module({
+  imports: [StorageModule, AuthModule],
+})
+export class AppModule {}
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/main.ts">
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app.module';
+import { CustomLogger } from './logger/custom-logger';
+
+async function bootstrap(logger: CustomLogger) {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
+  await app.listen(6969);
+  console.log('Database is running: http://localhost:6969');
+}
+
+// Create the CustomLogger with the AmqpConnection
+const logger = new CustomLogger('Bootstrap');
+
+bootstrap(logger);
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/logger/custom-logger.ts">
+import { ConsoleLogger, Injectable, Inject } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+
+@Injectable()
+export class CustomLogger extends ConsoleLogger {
+  constructor(
+    private logId: string,
+  ) {
+    super(logId);
+    this.setLogLevels(['log', 'error', 'warn', 'debug', 'verbose']);
+  }
+
+  log(message: string, context?: string) {
+    this.printMessage(message, 'log', context);
+    // this.emitLogEvent('log', message);
+  }
+
+  warn(message: string, context?: string) {
+    this.printMessage(message, 'warn', context);
+    // this.emitLogEvent('warn', message);
+  }
+
+  error(message: string, trace?: string, context?: string) {
+    this.printMessage(message, 'error', context);
+    // this.emitLogEvent('error', message);
+    if (trace) {
+      this.printMessage(trace, 'error', context);
+    }
+  }
+
+  debug(message: string, context?: string) {
+    this.printMessage(message, 'debug', context);
+  }
+
+  verbose(message: string, context?: string) {
+    this.printMessage(message, 'verbose', context);
+  }
+
+  private printMessage(message: string, logLevel: string, context?: string) {
+    const output = context ? `[${context}] ${message}` : message;
+    console.log(`[${this.getNow()}] [${logLevel.toUpperCase()}] [${this.logId}] ${output}`);
+  }
+
+  private getNow(): string {
+    return new Date().toISOString();
+  }
+
+  static write_to_file(message: string) {
+    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
+    fs.appendFile(logFile, message, (err) => {
+      if (err) {
+        console.error('Failed to write to log file:', err);
+      }
+    });
+  }
+
+  static clearSTDOUT() {
+    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
+    try {
+      fs.writeFileSync(logFile, '');
+      console.log(`Log file cleared at ${logFile}`);
+    } catch (error) {
+      console.error('Failed to clear log file:', error);
+    }
+  }
+}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/jwt-auth.guard.ts">
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/jwt.strategy.ts">
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: 'your_jwt_secret', // In production, use an environment variable
+    });
+  }
+
+  async validate(payload: any) {
+    return { userId: payload.sub, username: payload.username };
+  }
+}
+</FILE>
+<FILE path="start:dev.stdout.txt" TARGET>
+c[[90m12:01:18 PM[0m] Starting compilation in watch mode...
+
+[96msrc/storage/storage.service.ts[0m:[93m212[0m:[93m17[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string' is not assignable to parameter of type 'string[]'.
+
+[7m212[0m     db.set(key, value);
+[7m   [0m [91m                ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m222[0m:[93m12[0m - [91merror[0m[90m TS2352: [0mConversion of type 'string[]' to type 'string' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+
+[7m222[0m     return db.get(key) as string | null;
+[7m   [0m [91m           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m232[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string[]'.
+
+[7m232[0m       value = 0;
+[7m   [0m [91m      ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m236[0m:[93m5[0m - [91merror[0m[90m TS2356: [0mAn arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
+
+[7m236[0m     value++;
+[7m   [0m [91m    ~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m239[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'string[]' is not assignable to type 'number'.
+
+[7m239[0m     return value;
+[7m   [0m [91m    ~~~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m249[0m:[93m7[0m - [91merror[0m[90m TS2740: [0mType 'Set<string>' is missing the following properties from type 'string[]': length, pop, push, concat, and 24 more.
+
+[7m249[0m       set = new Set<string>();
+[7m   [0m [91m      ~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m252[0m:[93m29[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
+
+[7m252[0m     const initialSize = set.size;
+[7m   [0m [91m                            ~~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m253[0m:[93m35[0m - [91merror[0m[90m TS2339: [0mProperty 'add' does not exist on type 'string[]'.
+
+[7m253[0m     members.forEach(member => set.add(member));
+[7m   [0m [91m                                  ~~~[0m
+
+[96msrc/storage/storage.service.ts[0m:[93m254[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
+
+[7m254[0m     const addedCount = set.size - initialSize;
+[7m   [0m [91m                           ~~~~[0m
+
+[[90m12:01:19 PM[0m] Found 9 errors. Watching for file changes.
+
+
+</FILE>
+<REQUEST>
+getting errors
+</REQUEST>

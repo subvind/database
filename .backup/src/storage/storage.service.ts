@@ -204,13 +204,12 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     return db.get(key)?.length || 0;
   }
 
-  // String Operations
   async set(username: string, dbIndex: number, key: string, value: string): Promise<'OK'> {
     if (!this.checkUserAccess(username, dbIndex)) {
       throw new UnauthorizedException('User does not have access to this database');
     }
     const db = this.getDatabase(dbIndex);
-    db.set(key, [value]); // Store value as an array
+    db.set(key, value);
     await this.appendToWAL('set', username, dbIndex, key, value);
     return 'OK';
   }
@@ -220,8 +219,7 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
       throw new UnauthorizedException('User does not have access to this database');
     }
     const db = this.getDatabase(dbIndex);
-    const value = db.get(key);
-    return Array.isArray(value) ? value[0] : null;
+    return db.get(key) as string | null;
   }
 
   async incr(username: string, dbIndex: number, key: string): Promise<number> {
@@ -230,16 +228,15 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     }
     const db = this.getDatabase(dbIndex);
     let value = db.get(key);
-    if (!value) {
-      value = ['0'];
-    } else if (!Array.isArray(value) || typeof parseInt(value[0]) !== 'number') {
+    if (value === undefined) {
+      value = 0;
+    } else if (typeof value !== 'number') {
       throw new Error('Value is not a number');
     }
-    let number = parseInt(value[0]) + 1;
-    value[0] = `${number}`;
+    value++;
     db.set(key, value);
     await this.appendToWAL('incr', username, dbIndex, key);
-    return number;
+    return value;
   }
 
   async sadd(username: string, dbIndex: number, key: string, ...members: string[]): Promise<number> {
@@ -248,17 +245,13 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     }
     const db = this.getDatabase(dbIndex);
     let set = db.get(key);
-    if (!set || !Array.isArray(set)) {
-      set = [];
+    if (!set || !(set instanceof Set)) {
+      set = new Set<string>();
       db.set(key, set);
     }
-    const initialSize = set.length;
-    members.forEach(member => {
-      if (!set.includes(member)) {
-        set.push(member);
-      }
-    });
-    const addedCount = set.length - initialSize;
+    const initialSize = set.size;
+    members.forEach(member => set.add(member));
+    const addedCount = set.size - initialSize;
     await this.appendToWAL('sadd', username, dbIndex, key, ...members);
     return addedCount;
   }

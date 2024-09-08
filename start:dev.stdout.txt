@@ -1,49 +1,37 @@
-c[[90m11:55:55 AM[0m] Starting compilation in watch mode...
+c[[90m12:26:39 PM[0m] Starting compilation in watch mode...
 
-[96msrc/storage/storage.service.ts[0m:[93m214[0m:[93m17[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string' is not assignable to parameter of type 'string[]'.
+[[90m12:26:41 PM[0m] Found 0 errors. Watching for file changes.
 
-[7m214[0m     db.set(key, value);
-[7m   [0m [91m                ~~~~~[0m
+[2024-09-08T17:26:41.516Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T17:26:41.526Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T17:26:41.526Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T17:26:41.527Z] [ERROR] [Bootstrap] [ExceptionHandler] Nest can't resolve dependencies of the StorageService (?). Please make sure that the argument JwtService at index [0] is available in the StorageModule context.
 
-[96msrc/storage/storage.service.ts[0m:[93m224[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'string[]' is not assignable to type 'string'.
+Potential solutions:
+- Is StorageModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current StorageModule?
+- If JwtService is exported from a separate @Module, is that module imported within StorageModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
 
-[7m224[0m     return db.get(key) || null;
-[7m   [0m [91m    ~~~~~~[0m
+[2024-09-08T17:26:41.527Z] [ERROR] [Bootstrap] [ExceptionHandler] Error: Nest can't resolve dependencies of the StorageService (?). Please make sure that the argument JwtService at index [0] is available in the StorageModule context.
 
-[96msrc/storage/storage.service.ts[0m:[93m234[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'number' is not assignable to type 'string[]'.
+Potential solutions:
+- Is StorageModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current StorageModule?
+- If JwtService is exported from a separate @Module, is that module imported within StorageModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
 
-[7m234[0m       value = 0;
-[7m   [0m [91m      ~~~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m238[0m:[93m5[0m - [91merror[0m[90m TS2356: [0mAn arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
-
-[7m238[0m     value++;
-[7m   [0m [91m    ~~~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m241[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType 'string[]' is not assignable to type 'number'.
-
-[7m241[0m     return value;
-[7m   [0m [91m    ~~~~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m252[0m:[93m7[0m - [91merror[0m[90m TS2740: [0mType 'Set<unknown>' is missing the following properties from type 'string[]': length, pop, push, concat, and 24 more.
-
-[7m252[0m       set = new Set();
-[7m   [0m [91m      ~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m255[0m:[93m29[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
-
-[7m255[0m     const initialSize = set.size;
-[7m   [0m [91m                            ~~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m256[0m:[93m35[0m - [91merror[0m[90m TS2339: [0mProperty 'add' does not exist on type 'string[]'.
-
-[7m256[0m     members.forEach(member => set.add(member));
-[7m   [0m [91m                                  ~~~[0m
-
-[96msrc/storage/storage.service.ts[0m:[93m257[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'size' does not exist on type 'string[]'.
-
-[7m257[0m     const addedCount = set.size - initialSize;
-[7m   [0m [91m                           ~~~~[0m
-
-[[90m11:55:57 AM[0m] Found 9 errors. Watching for file changes.
-
+    at Injector.lookupComponentInParentModules (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:254:19)
+    at async Injector.resolveComponentInstance (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:207:33)
+    at async resolveParam (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:128:38)
+    at async Promise.all (index 0)
+    at async Injector.resolveConstructorParams (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:143:27)
+    at async Injector.loadInstance (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:70:13)
+    at async Injector.loadProvider (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:97:9)
+    at async /home/travis/Projects/database/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)
+    at async InstanceLoader.createInstancesOfProviders (/home/travis/Projects/database/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
