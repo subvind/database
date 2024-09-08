@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs/promises';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,7 @@ interface User {
   username: string;
   passwordHash: string;
   databases: number[];
+  isAdmin: boolean;
 }
 
 @Injectable()
@@ -111,10 +112,21 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     }
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
+    let isAdmin: boolean = false;
+    if (process.env.ADMIN) {
+      if (process.env.ADMIN === username) {
+        isAdmin = true;
+      }
+    } else {
+      if (username === 'root') {
+        isAdmin = true
+      }
+    }
     const newUser: User = {
       username,
       passwordHash,
       databases: [],
+      isAdmin
     };
     this.users.set(username, newUser);
     await this.saveUsers();
@@ -332,5 +344,46 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     await this.createSnapshot();
     await this.saveUsers();
     console.log('Snapshot generated successfully.');
+  }
+
+  async deleteDatabase(username: string, dbIndex: number): Promise<void> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    if (!user.databases.includes(dbIndex)) throw new ForbiddenException('User does not have access to this database');
+
+    this.databases.delete(dbIndex);
+    user.databases = user.databases.filter(db => db !== dbIndex);
+    await this.saveUsers();
+    await this.appendToWAL('deleteDatabase', username, dbIndex);
+  }
+
+  async getDatabaseInfo(username: string, dbIndex: number): Promise<any> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return {
+      keyCount: db.size,
+      sizeInBytes: JSON.stringify(Array.from(db)).length,
+    };
+  }
+
+  async getUserInfo(username: string): Promise<any> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    const { passwordHash, ...userInfo } = user;
+    return userInfo;
+  }
+
+  async listDatabases(username: string): Promise<number[]> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    return user.databases;
+  }
+
+  async listUsers(username: string): Promise<string[]> {
+    const user = this.users.get(username);
+    if (!user || !user.isAdmin) throw new UnauthorizedException('Unauthorized');
+    return Array.from(this.users.keys());
   }
 }

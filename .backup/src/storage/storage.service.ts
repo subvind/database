@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs/promises';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -13,9 +14,9 @@ interface User {
 export class StorageService implements OnModuleInit, OnModuleDestroy {
   private databases: Map<number, Map<string, any>> = new Map();
   private users: Map<string, User> = new Map();
-  private walFile: string = './data/wal.log';
-  private snapshotFile: string = './data/snapshot.json';
-  private usersFile: string = './data/users.json';
+  private walFile: string = 'data/wal.log';
+  private snapshotFile: string = 'data/snapshot.json';
+  private usersFile: string = 'data/users.json';
   private walStream: fs.FileHandle | null = null;
 
   constructor(private jwtService: JwtService) {}
@@ -232,10 +233,10 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     let value = db.get(key);
     if (!value) {
       value = ['0'];
-    } else if (!Array.isArray(value) || typeof parseInt(value[0]) !== 'number') {
+    } else if (!Array.isArray(value) || typeof Number(value[0]) !== 'number') {
       throw new Error('Value is not a number');
     }
-    let number = parseInt(value[0]) + 1;
+    let number = Number(value[0]) + 1;
     value[0] = `${number}`;
     db.set(key, value);
     await this.appendToWAL('incr', username, dbIndex, key);
@@ -323,5 +324,13 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
   async triggerSnapshot(): Promise<void> {
     await this.createSnapshot();
     await this.saveUsers();
+  }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async generateSnapshot() {
+    console.log('Generating snapshot...');
+    await this.createSnapshot();
+    await this.saveUsers();
+    console.log('Snapshot generated successfully.');
   }
 }

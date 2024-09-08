@@ -1,0 +1,10 @@
+Creating user or logging in...
+User created successfully.
+Assigning user to database 1...
+Testing user info operation...
+User info response status: 200
+User info response data: { username: 'testuser_info', databases: [ 1 ], isAdmin: false }
+User info test passed: Username matches.
+User info test passed: Databases field is an array.
+User info test passed: isAdmin field is a boolean.
+All user info tests completed successfully.

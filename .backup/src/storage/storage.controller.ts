@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Query, UseGuards, Request, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LocalAuthGuard } from '../auth/local-auth.guard';
@@ -168,42 +168,5 @@ export class StorageController {
     @Body('seconds') seconds: number
   ): Promise<boolean> {
     return await this.storageService.expire(req.user.username, Number(dbIndex), key, seconds);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete('database/:dbIndex')
-  async deleteDatabase(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number
-  ): Promise<string> {
-    await this.storageService.deleteDatabase(req.user.username, Number(dbIndex));
-    return 'Database deleted successfully';
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('database/:dbIndex/info')
-  async getDatabaseInfo(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number
-  ): Promise<any> {
-    return await this.storageService.getDatabaseInfo(req.user.username, Number(dbIndex));
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('user/info')
-  async getUserInfo(@Request() req): Promise<any> {
-    return await this.storageService.getUserInfo(req.user.username);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('databases')
-  async listDatabases(@Request() req): Promise<number[]> {
-    return await this.storageService.listDatabases(req.user.username);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('users')
-  async listUsers(@Request() req): Promise<string[]> {
-    return await this.storageService.listUsers(req.user.username);
   }
 }

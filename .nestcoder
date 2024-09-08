@@ -272,234 +272,44 @@ export function dot(a: V3, b: V3): number {
 
 You will now be given the actual INPUT you must work with.
 
-<FILE path="/home/travis/Projects/database/test/key-value.test.ts">
-import * as request from 'supertest';
+<FILE path="/home/travis/Projects/database/src/app.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { StorageModule } from './storage/storage.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
-const API_URL = 'http://localhost:6969';
-
-async function runTests() {
-  let accessToken: string;
-
-  try {
-    console.log('Creating user or logging in...');
-    try {
-      await request(API_URL)
-        .post('/storage/user')
-        .send({ username: 'testuser', password: 'testpass' });
-      console.log('User created successfully.');
-    } catch (error) {
-      console.log('User already exists, proceeding with login.');
-    }
-
-    const loginResponse = await request(API_URL)
-      .post('/storage/login')
-      .send({ username: 'testuser', password: 'testpass' });
-
-    accessToken = loginResponse.body.access_token;
-
-    console.log('Assigning user to database 0...');
-    await request(API_URL)
-      .post('/storage/assign-db')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ dbIndex: 0 });
-
-    console.log('Testing set and get operations...');
-    const setResponse = await request(API_URL)
-      .post('/storage/set/0/testkey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'testvalue' });
-
-    console.log('Set response status:', setResponse.status);
-    console.log('Set response text:', setResponse.text);
-
-    const getResponse = await request(API_URL)
-      .get('/storage/get/0/testkey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get response status:', getResponse.status);
-    console.log('Get response text:', getResponse.text);
-
-    console.log('Testing increment operation: starting from 1...');
-    await request(API_URL)
-      .post('/storage/set/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: '1' });
-
-    const incrResponse = await request(API_URL)
-      .post('/storage/incr/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Increment response status:', incrResponse.status);
-    console.log('Increment response text:', incrResponse.text);
-
-    const getIncrResponse = await request(API_URL)
-      .get('/storage/get/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get incremented value status:', getIncrResponse.status);
-    console.log('Get incremented value text:', getIncrResponse.text);
-
-    console.log('Testing delete operation...');
-    await request(API_URL)
-      .post('/storage/set/0/deletekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'to be deleted' });
-
-    const deleteResponse = await request(API_URL)
-      .post('/storage/del/0')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ keys: ['deletekey'] });
-
-    console.log('Delete response status:', deleteResponse.status);
-    console.log('Delete response text:', deleteResponse.text);
-
-    const getDeletedResponse = await request(API_URL)
-      .get('/storage/get/0/deletekey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get deleted key status:', getDeletedResponse.status);
-    console.log('Get deleted key text:', getDeletedResponse.text);
-
-    console.log('Testing exists operation...');
-    await request(API_URL)
-      .post('/storage/set/0/existkey1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'value1' });
-
-    await request(API_URL)
-      .post('/storage/set/0/existkey2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'value2' });
-
-    const existsResponse = await request(API_URL)
-      .get('/storage/exists/0?keys=existkey1&keys=existkey2&keys=nonexistentkey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Exists response status:', existsResponse.status);
-    console.log('Exists response text:', existsResponse.text);
-
-    console.log('Testing expiration operation...');
-    await request(API_URL)
-      .post('/storage/set/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'will expire' });
-
-    const expireResponse = await request(API_URL)
-      .post('/storage/expire/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ seconds: 1 });
-
-    console.log('Expire response status:', expireResponse.status);
-    console.log('Expire response text:', expireResponse.text);
-
-    console.log('Waiting for 2 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const getExpiredResponse = await request(API_URL)
-      .get('/storage/get/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get expired key status:', getExpiredResponse.status);
-    console.log('Get expired key text:', getExpiredResponse.text);
-
-    console.log('All tests completed successfully.');
-  } catch (error) {
-    console.error('Test failed:', error);
-  }
-}
-
-runTests();
+@Module({
+  imports: [
+    StorageModule,
+    AuthModule,
+    ScheduleModule.forRoot(),
+  ],
+})
+export class AppModule {}
 </FILE>
-<FILE path="/home/travis/Projects/database/test/message-queue.test.ts">
-import * as request from 'supertest';
+<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
+import { Module } from '@nestjs/common';
+import { StorageService } from './storage.service';
+import { StorageController } from './storage.controller';
+import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 
-const API_URL = 'http://localhost:6969';
-
-async function runTests() {
-  let accessToken: string;
-
-  try {
-    console.log('Creating user or logging in...');
-    try {
-      await request(API_URL)
-        .post('/storage/user')
-        .send({ username: 'mquser', password: 'mqpass' });
-      console.log('User created successfully.');
-    } catch (error) {
-      console.log('User already exists, proceeding with login.');
-    }
-
-    const loginResponse = await request(API_URL)
-      .post('/storage/login')
-      .send({ username: 'mquser', password: 'mqpass' });
-
-    accessToken = loginResponse.body.access_token;
-
-    console.log('Assigning user to database 1...');
-    await request(API_URL)
-      .post('/storage/assign-db')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ dbIndex: 1 });
-
-    console.log('Testing rpush operation...');
-    const rpushResponse = await request(API_URL)
-      .post('/storage/rpush/1/queue')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ values: ['message1', 'message2', 'message3'] });
-
-    console.log('RPush response status:', rpushResponse.status);
-    console.log('RPush response text:', rpushResponse.text);
-
-    console.log('Testing llen operation...');
-    const llenResponse = await request(API_URL)
-      .get('/storage/llen/1/queue')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('LLen response status:', llenResponse.status);
-    console.log('LLen response text:', llenResponse.text);
-
-    console.log('Testing lrange operation...');
-    const lrangeResponse = await request(API_URL)
-      .get('/storage/lrange/1/queue?start=0&stop=-1')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('LRange response status:', lrangeResponse.status);
-    console.log('LRange response text:', lrangeResponse.text);
-
-    console.log('Testing lpop operation...');
-    const lpopResponse = await request(API_URL)
-      .post('/storage/lpop/1/queue')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('LPop response status:', lpopResponse.status);
-    console.log('LPop response text:', lpopResponse.text);
-
-    console.log('Checking queue length after lpop...');
-    const llenAfterPopResponse = await request(API_URL)
-      .get('/storage/llen/1/queue')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('LLen after pop response status:', llenAfterPopResponse.status);
-    console.log('LLen after pop response text:', llenAfterPopResponse.text);
-
-    console.log('Checking queue contents after lpop...');
-    const lrangeAfterPopResponse = await request(API_URL)
-      .get('/storage/lrange/1/queue?start=0&stop=-1')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('LRange after pop response status:', lrangeAfterPopResponse.status);
-    console.log('LRange after pop response text:', lrangeAfterPopResponse.text);
-
-    console.log('All tests completed successfully.');
-  } catch (error) {
-    console.error('Test failed:', error);
-  }
-}
-
-runTests();
+@Module({
+  imports: [
+    JwtModule.register({
+      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
+      signOptions: { expiresIn: '60m' },
+    }),
+    ScheduleModule.forRoot(),
+  ],
+  providers: [StorageService],
+  controllers: [StorageController],
+  exports: [StorageService],
+})
+export class StorageModule {}
 </FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.service.ts">
-import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs/promises';
 import * as bcrypt from 'bcrypt';
@@ -509,6 +319,7 @@ interface User {
   username: string;
   passwordHash: string;
   databases: number[];
+  isAdmin: boolean;
 }
 
 @Injectable()
@@ -612,10 +423,21 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     }
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
+    let isAdmin: boolean = false;
+    if (process.env.ADMIN) {
+      if (process.env.ADMIN === username) {
+        isAdmin = true;
+      }
+    } else {
+      if (username === 'root') {
+        isAdmin = true
+      }
+    }
     const newUser: User = {
       username,
       passwordHash,
       databases: [],
+      isAdmin
     };
     this.users.set(username, newUser);
     await this.saveUsers();
@@ -834,10 +656,51 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     await this.saveUsers();
     console.log('Snapshot generated successfully.');
   }
+
+  async deleteDatabase(username: string, dbIndex: number): Promise<void> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    if (!user.databases.includes(dbIndex)) throw new ForbiddenException('User does not have access to this database');
+
+    this.databases.delete(dbIndex);
+    user.databases = user.databases.filter(db => db !== dbIndex);
+    await this.saveUsers();
+    await this.appendToWAL('deleteDatabase', username, dbIndex);
+  }
+
+  async getDatabaseInfo(username: string, dbIndex: number): Promise<any> {
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
+    const db = this.getDatabase(dbIndex);
+    return {
+      keyCount: db.size,
+      sizeInBytes: JSON.stringify(Array.from(db)).length,
+    };
+  }
+
+  async getUserInfo(username: string): Promise<any> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    const { passwordHash, ...userInfo } = user;
+    return userInfo;
+  }
+
+  async listDatabases(username: string): Promise<number[]> {
+    const user = this.users.get(username);
+    if (!user) throw new UnauthorizedException('User not found');
+    return user.databases;
+  }
+
+  async listUsers(username: string): Promise<string[]> {
+    const user = this.users.get(username);
+    if (!user || !user.isAdmin) throw new UnauthorizedException('Unauthorized');
+    return Array.from(this.users.keys());
+  }
 }
 </FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.controller.ts">
-import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Request, Delete } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LocalAuthGuard } from '../auth/local-auth.guard';
@@ -1008,28 +871,44 @@ export class StorageController {
   ): Promise<boolean> {
     return await this.storageService.expire(req.user.username, Number(dbIndex), key, seconds);
   }
-}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
-import { Module } from '@nestjs/common';
-import { StorageService } from './storage.service';
-import { StorageController } from './storage.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { ScheduleModule } from '@nestjs/schedule';
 
-@Module({
-  imports: [
-    JwtModule.register({
-      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
-      signOptions: { expiresIn: '60m' },
-    }),
-    ScheduleModule.forRoot(),
-  ],
-  providers: [StorageService],
-  controllers: [StorageController],
-  exports: [StorageService],
-})
-export class StorageModule {}
+  @UseGuards(JwtAuthGuard)
+  @Delete('database/:dbIndex')
+  async deleteDatabase(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number
+  ): Promise<string> {
+    await this.storageService.deleteDatabase(req.user.username, Number(dbIndex));
+    return 'Database deleted successfully';
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('database/:dbIndex/info')
+  async getDatabaseInfo(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number
+  ): Promise<any> {
+    return await this.storageService.getDatabaseInfo(req.user.username, Number(dbIndex));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('user/info')
+  async getUserInfo(@Request() req): Promise<any> {
+    return await this.storageService.getUserInfo(req.user.username);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('databases')
+  async listDatabases(@Request() req): Promise<number[]> {
+    return await this.storageService.listDatabases(req.user.username);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users')
+  async listUsers(@Request() req): Promise<string[]> {
+    return await this.storageService.listUsers(req.user.username);
+  }
+}
 </FILE>
 <FILE path="/home/travis/Projects/database/src/auth/auth.module.ts">
 import { Module } from '@nestjs/common';
@@ -1055,117 +934,489 @@ import { AuthGuard } from '@nestjs/passport';
 export class JwtAuthGuard extends AuthGuard('jwt') {}
 
 </FILE>
-<FILE path="/home/travis/Projects/database/src/auth/jwt.strategy.ts">
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
+<FILE path="/home/travis/Projects/database/src/auth/local-auth.guard.ts">
 import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: 'your_jwt_secret', // In production, use an environment variable
+export class LocalAuthGuard extends AuthGuard('local') {}
+</FILE>
+<FILE path="/home/travis/Projects/database/test/delete-database.test.ts">
+import axios from 'axios';
+
+const BASE_URL = 'http://localhost:6969';
+const username = 'testuser_delete_db';
+const password = 'testpassword';
+let token: string;
+
+async function createUserAndLogin() {
+  console.log('Creating user or logging in...');
+  try {
+    await axios.post(`${BASE_URL}/storage/user`, { username, password });
+    console.log('User created successfully.');
+  } catch (error) {
+    console.log('User already exists, proceeding to login.');
+  }
+
+  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
+  token = loginResponse.data.access_token;
+}
+
+async function assignUserToDatabase(dbIndex: number) {
+  console.log(`Assigning user to database ${dbIndex}...`);
+  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+async function testDeleteDatabase() {
+  console.log('Testing delete database operation...');
+
+  // Assign user to database 3
+  await assignUserToDatabase(3);
+
+  // Set a key in the database
+  const setResponse = await axios.post(`${BASE_URL}/storage/set/3/testkey`, { value: 'testvalue' }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('Set response status:', setResponse.status);
+  console.log('Set response text:', setResponse.data);
+
+  // Get the key to verify it's set
+  const getResponse = await axios.get(`${BASE_URL}/storage/get/3/testkey`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('Get response status:', getResponse.status);
+  console.log('Get response text:', getResponse.data);
+
+  // Delete the database
+  const deleteResponse = await axios.delete(`${BASE_URL}/storage/database/3`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('Delete database response status:', deleteResponse.status);
+  console.log('Delete database response text:', deleteResponse.data);
+
+  // Try to get the key again, should fail or return null
+  try {
+    const getAfterDeleteResponse = await axios.get(`${BASE_URL}/storage/get/3/testkey`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('Get after delete response status:', getAfterDeleteResponse.status);
+    console.log('Get after delete response text:', getAfterDeleteResponse.data);
+  } catch (error) {
+    console.log('Get after delete failed as expected:', error.response.status);
+  }
+
+  // List databases to verify the deleted database is not present
+  const listDatabasesResponse = await axios.get(`${BASE_URL}/storage/databases`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('List databases response status:', listDatabasesResponse.status);
+  console.log('List databases response text:', listDatabasesResponse.data);
+}
+
+async function runTests() {
+  try {
+    await createUserAndLogin();
+    await testDeleteDatabase();
+    console.log('All delete database tests completed successfully.');
+  } catch (error) {
+    console.error('An error occurred during testing:', error.message);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/test/list-database.test.ts">
+import axios from 'axios';
+
+const BASE_URL = 'http://localhost:6969';
+const username = 'testuser_list_db';
+const password = 'testpassword';
+let token: string;
+
+async function createUserAndLogin() {
+  console.log('Creating user or logging in...');
+  try {
+    await axios.post(`${BASE_URL}/storage/user`, { username, password });
+    console.log('User created successfully.');
+  } catch (error) {
+    console.log('User already exists, proceeding to login.');
+  }
+
+  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
+  token = loginResponse.data.access_token;
+}
+
+async function assignUserToDatabase(dbIndex: number) {
+  console.log(`Assigning user to database ${dbIndex}...`);
+  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+async function testListDatabases() {
+  console.log('Testing list databases operation...');
+
+  // Assign user to multiple databases
+  await assignUserToDatabase(1);
+  await assignUserToDatabase(2);
+  await assignUserToDatabase(3);
+
+  // List databases
+  const listDatabasesResponse = await axios.get(`${BASE_URL}/storage/databases`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('List databases response status:', listDatabasesResponse.status);
+  console.log('List databases response data:', listDatabasesResponse.data);
+
+  // Verify the response
+  const databases = listDatabasesResponse.data;
+  if (databases.includes(1) && databases.includes(2) && databases.includes(3)) {
+    console.log('List databases test passed: All assigned databases are present.');
+  } else {
+    console.error('List databases test failed: Not all assigned databases are present.');
+  }
+
+  // Test database info
+  console.log('Testing get database info...');
+  const dbInfoResponse = await axios.get(`${BASE_URL}/storage/database/1/info`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('Database info response status:', dbInfoResponse.status);
+  console.log('Database info response data:', dbInfoResponse.data);
+
+  // Test user info
+  console.log('Testing get user info...');
+  const userInfoResponse = await axios.get(`${BASE_URL}/storage/user/info`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('User info response status:', userInfoResponse.status);
+  console.log('User info response data:', userInfoResponse.data);
+}
+
+async function runTests() {
+  try {
+    await createUserAndLogin();
+    await testListDatabases();
+    console.log('All list database tests completed successfully.');
+  } catch (error) {
+    console.error('An error occurred during testing:', error.message);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/test/key-value.test.ts">
+import * as request from 'supertest';
+
+const API_URL = 'http://localhost:6969';
+
+async function runTests() {
+  let accessToken: string;
+
+  try {
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'testuser', password: 'testpass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
+
+    const loginResponse = await request(API_URL)
+      .post('/storage/login')
+      .send({ username: 'testuser', password: 'testpass' });
+
+    accessToken = loginResponse.body.access_token;
+
+    console.log('Assigning user to database 0...');
+    await request(API_URL)
+      .post('/storage/assign-db')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ dbIndex: 0 });
+
+    console.log('Testing set and get operations...');
+    const setResponse = await request(API_URL)
+      .post('/storage/set/0/testkey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'testvalue' });
+
+    console.log('Set response status:', setResponse.status);
+    console.log('Set response text:', setResponse.text);
+
+    const getResponse = await request(API_URL)
+      .get('/storage/get/0/testkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get response status:', getResponse.status);
+    console.log('Get response text:', getResponse.text);
+
+    console.log('Testing increment operation: starting from 1...');
+    await request(API_URL)
+      .post('/storage/set/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: '1' });
+
+    const incrResponse = await request(API_URL)
+      .post('/storage/incr/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Increment response status:', incrResponse.status);
+    console.log('Increment response text:', incrResponse.text);
+
+    const getIncrResponse = await request(API_URL)
+      .get('/storage/get/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get incremented value status:', getIncrResponse.status);
+    console.log('Get incremented value text:', getIncrResponse.text);
+
+    console.log('Testing delete operation...');
+    await request(API_URL)
+      .post('/storage/set/0/deletekey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'to be deleted' });
+
+    const deleteResponse = await request(API_URL)
+      .post('/storage/del/0')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ keys: ['deletekey'] });
+
+    console.log('Delete response status:', deleteResponse.status);
+    console.log('Delete response text:', deleteResponse.text);
+
+    const getDeletedResponse = await request(API_URL)
+      .get('/storage/get/0/deletekey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get deleted key status:', getDeletedResponse.status);
+    console.log('Get deleted key text:', getDeletedResponse.text);
+
+    console.log('Testing exists operation...');
+    await request(API_URL)
+      .post('/storage/set/0/existkey1')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'value1' });
+
+    await request(API_URL)
+      .post('/storage/set/0/existkey2')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'value2' });
+
+    const existsResponse = await request(API_URL)
+      .get('/storage/exists/0?keys=existkey1&keys=existkey2&keys=nonexistentkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Exists response status:', existsResponse.status);
+    console.log('Exists response text:', existsResponse.text);
+
+    console.log('All tests completed successfully.');
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/test/info-user.test.ts">
+import axios from 'axios';
+
+const BASE_URL = 'http://localhost:6969';
+const username = 'testuser_info';
+const password = 'testpassword';
+let token: string;
+
+async function createUserAndLogin() {
+  console.log('Creating user or logging in...');
+  try {
+    await axios.post(`${BASE_URL}/storage/user`, { username, password });
+    console.log('User created successfully.');
+  } catch (error) {
+    console.log('User already exists, proceeding to login.');
+  }
+
+  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
+  token = loginResponse.data.access_token;
+}
+
+async function assignUserToDatabase(dbIndex: number) {
+  console.log(`Assigning user to database ${dbIndex}...`);
+  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+async function testUserInfo() {
+  console.log('Testing user info operation...');
+
+  // Get user info
+  const userInfoResponse = await axios.get(`${BASE_URL}/storage/user/info`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  console.log('User info response status:', userInfoResponse.status);
+  console.log('User info response data:', userInfoResponse.data);
+
+  // Verify user info
+  if (userInfoResponse.data.username === username) {
+    console.log('User info test passed: Username matches.');
+  } else {
+    console.error('User info test failed: Username does not match.');
+  }
+
+  if (Array.isArray(userInfoResponse.data.databases)) {
+    console.log('User info test passed: Databases field is an array.');
+  } else {
+    console.error('User info test failed: Databases field is not an array.');
+  }
+
+  if (typeof userInfoResponse.data.isAdmin === 'boolean') {
+    console.log('User info test passed: isAdmin field is a boolean.');
+  } else {
+    console.error('User info test failed: isAdmin field is not a boolean.');
+  }
+}
+
+async function runTests() {
+  try {
+    await createUserAndLogin();
+    await assignUserToDatabase(1); // Assign to database 1 for testing
+    await testUserInfo();
+    console.log('All user info tests completed successfully.');
+  } catch (error) {
+    console.error('An error occurred during testing:', error.message);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/src/logger/custom-logger.ts">
+import { ConsoleLogger, Injectable, Inject } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+
+@Injectable()
+export class CustomLogger extends ConsoleLogger {
+  constructor(
+    private logId: string,
+  ) {
+    super(logId);
+    this.setLogLevels(['log', 'error', 'warn', 'debug', 'verbose']);
+  }
+
+  log(message: string, context?: string) {
+    this.printMessage(message, 'log', context);
+    // this.emitLogEvent('log', message);
+  }
+
+  warn(message: string, context?: string) {
+    this.printMessage(message, 'warn', context);
+    // this.emitLogEvent('warn', message);
+  }
+
+  error(message: string, trace?: string, context?: string) {
+    this.printMessage(message, 'error', context);
+    // this.emitLogEvent('error', message);
+    if (trace) {
+      this.printMessage(trace, 'error', context);
+    }
+  }
+
+  debug(message: string, context?: string) {
+    this.printMessage(message, 'debug', context);
+  }
+
+  verbose(message: string, context?: string) {
+    this.printMessage(message, 'verbose', context);
+  }
+
+  private printMessage(message: string, logLevel: string, context?: string) {
+    const output = context ? `[${context}] ${message}` : message;
+    console.log(`[${this.getNow()}] [${logLevel.toUpperCase()}] [${this.logId}] ${output}`);
+  }
+
+  private getNow(): string {
+    return new Date().toISOString();
+  }
+
+  static write_to_file(message: string) {
+    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
+    fs.appendFile(logFile, message, (err) => {
+      if (err) {
+        console.error('Failed to write to log file:', err);
+      }
     });
   }
 
-  async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username };
+  static clearSTDOUT() {
+    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
+    try {
+      fs.writeFileSync(logFile, '');
+      console.log(`Log file cleared at ${logFile}`);
+    } catch (error) {
+      console.error('Failed to clear log file:', error);
+    }
   }
 }
 </FILE>
-<FILE path="/home/travis/Projects/database/src/app.module.ts">
-import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { StorageModule } from './storage/storage.module';
-import { ScheduleModule } from '@nestjs/schedule';
+<FILE path="/home/travis/Projects/database/test:info-user.stdout.txt">
+Creating user or logging in...
+User created successfully.
+Assigning user to database 1...
+Testing user info operation...
+User info response status: 200
+User info response data: { username: 'testuser_info', databases: [ 1 ], isAdmin: false }
+User info test passed: Username matches.
+User info test passed: Databases field is an array.
+User info test passed: isAdmin field is a boolean.
+All user info tests completed successfully.
 
-@Module({
-  imports: [
-    StorageModule,
-    AuthModule,
-    ScheduleModule.forRoot(),
-  ],
-})
-export class AppModule {}
 </FILE>
-<FILE path="/home/travis/Projects/database/src/main.ts">
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
-import { CustomLogger } from './logger/custom-logger';
-
-async function bootstrap(logger: CustomLogger) {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
-  await app.listen(6969);
-  console.log('Database is running: http://localhost:6969');
+<FILE path="/home/travis/Projects/database/test:list-database.stdout.txt">
+Creating user or logging in...
+User created successfully.
+Testing list databases operation...
+Assigning user to database 1...
+Assigning user to database 2...
+Assigning user to database 3...
+List databases response status: 200
+List databases response data: [ 1, 2, 3 ]
+List databases test passed: All assigned databases are present.
+Testing get database info...
+Database info response status: 200
+Database info response data: { keyCount: 1, sizeInBytes: 35 }
+Testing get user info...
+User info response status: 200
+User info response data: {
+  username: 'testuser_list_db',
+  databases: [ 1, 2, 3 ],
+  isAdmin: false
 }
-
-// Create the CustomLogger with the AmqpConnection
-const logger = new CustomLogger('Bootstrap');
-
-bootstrap(logger);
+All list database tests completed successfully.
 
 </FILE>
-<FILE path="/home/travis/Projects/database/test:key-value.stdout.txt">
-Creating user and getting access token...
-Assigning user to database 0...
-Testing set and get operations...
+<FILE path="/home/travis/Projects/database/test:delete-database.stdout.txt">
+Creating user or logging in...
+User already exists, proceeding to login.
+Testing delete database operation...
+Assigning user to database 3...
 Set response status: 201
 Set response text: OK
 Get response status: 200
 Get response text: testvalue
-Testing increment operation: starting from 1...
-Increment response status: 201
-Increment response text: 2
-Get incremented value status: 200
-Get incremented value text: 2
-Testing delete operation...
-Delete response status: 201
-Delete response text: 1
-Get deleted key status: 200
-Get deleted key text: 
-Testing exists operation...
-Exists response status: 200
-Exists response text: 2
-Testing expiration operation...
-Expire response status: 201
-Expire response text: true
-Waiting for 2 seconds...
-Get expired key status: 200
-Get expired key text: 
-All tests completed successfully.
+Delete database response status: 200
+Delete database response text: Database deleted successfully
+Get after delete failed as expected: 401
+List databases response status: 200
+List databases response text: []
+All delete database tests completed successfully.
 
 </FILE>
-<FILE path="/home/travis/Projects/database/test:message-queue.stdout.txt">
-Creating user or logging in...
-User created successfully.
-Assigning user to database 1...
-Testing rpush operation...
-RPush response status: 201
-RPush response text: 3
-Testing llen operation...
-LLen response status: 200
-LLen response text: 3
-Testing lrange operation...
-LRange response status: 200
-LRange response text: ["message1","message2","message3"]
-Testing lpop operation...
-LPop response status: 201
-LPop response text: message1
-Checking queue length after lpop...
-LLen after pop response status: 200
-LLen after pop response text: 2
-Checking queue contents after lpop...
-LRange after pop response status: 200
-LRange after pop response text: ["message2","message3"]
-All tests completed successfully.
-
-</FILE>
-<FILE path="test/session-cache.test.ts" TARGET>
+<FILE path="test/info-database.test.ts" TARGET>
 (empty file)
 </FILE>
 <REQUEST>
-should be just like the other tests except for checking session cache functionality
+should function like the other tests
 </REQUEST>

@@ -1,0 +1,9 @@
+Creating user or logging in...
+User already exists, proceeding to login.
+Testing database info operation...
+Assigning user to database 5...
+Database info response status: 200
+Database info response data: { keyCount: 2, sizeInBytes: 57 }
+Database info test passed: Key count matches.
+Database info test passed: Size in bytes is a positive number.
+All database info tests completed successfully.

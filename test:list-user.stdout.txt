@@ -1,0 +1,19 @@
+Creating user or logging in for root...
+User root created successfully.
+Creating user or logging in for regular_user...
+User regular_user created successfully.
+Note: Ensure that the admin user has been granted admin privileges in the system.
+Testing list users operation...
+List users response status: 200
+List users response data: [
+  'testuser',
+  'mquser',
+  'cacheuser',
+  'testuser_delete_db',
+  'testuser_list_db',
+  'root',
+  'regular_user'
+]
+List users test passed for admin: Both users are present in the list.
+List users test passed for regular user: Unauthorized access prevented as expected.
+All list users tests completed.

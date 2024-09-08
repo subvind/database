@@ -1,0 +1,14 @@
+Creating user or logging in...
+User already exists, proceeding to login.
+Testing delete database operation...
+Assigning user to database 3...
+Set response status: 201
+Set response text: OK
+Get response status: 200
+Get response text: testvalue
+Delete database response status: 200
+Delete database response text: Database deleted successfully
+Get after delete failed as expected: 401
+List databases response status: 200
+List databases response text: []
+All delete database tests completed successfully.
