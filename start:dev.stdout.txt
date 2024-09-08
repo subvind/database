@@ -1,32 +1,72 @@
-c[[90m12:28:51 PM[0m] Starting compilation in watch mode...
+c[[90m12:32:50 PM[0m] Starting compilation in watch mode...
 
-[[90m12:28:52 PM[0m] Found 0 errors. Watching for file changes.
+[[90m12:32:52 PM[0m] Found 0 errors. Watching for file changes.
 
-[2024-09-08T17:28:52.810Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T17:28:52.822Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
-[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
-[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
-[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
-[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
-[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
-[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
-[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
-[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
-[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
-[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
-[2024-09-08T17:28:52.827Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.286Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-08T17:32:52.296Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
+[2024-09-08T17:32:52.296Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
+[2024-09-08T17:32:52.297Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-08T17:32:52.300Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
+[2024-09-08T17:32:52.302Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
+[2024-09-08T17:32:52.302Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
+[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
+[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
+[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
+[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
+[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
+[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
 No snapshot found or error loading snapshot
 No users file found or error loading users
-[2024-09-08T17:28:52.829Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+[2024-09-08T17:32:52.315Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
 Database is running: http://localhost:6969
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+c[[90m12:34:31 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m12:34:31 PM[0m] Found 0 errors. Watching for file changes.
+
+[2024-09-08T17:34:31.987Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
+[2024-09-08T17:34:31.995Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
+[2024-09-08T17:34:31.995Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-08T17:34:31.997Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
+[2024-09-08T17:34:31.998Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
+[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
+[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
+[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
+[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
+[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
+[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
+[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
+[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
+[2024-09-08T17:34:32.007Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+Database is running: http://localhost:6969
+Generating snapshot...
+Snapshot generated successfully.

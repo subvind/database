@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs/promises';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -323,5 +324,13 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
   async triggerSnapshot(): Promise<void> {
     await this.createSnapshot();
     await this.saveUsers();
+  }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async generateSnapshot() {
+    console.log('Generating snapshot...');
+    await this.createSnapshot();
+    await this.saveUsers();
+    console.log('Snapshot generated successfully.');
   }
 }
