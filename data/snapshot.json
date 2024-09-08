@@ -1,1 +1,1 @@
-{"0":{"testkey":["testvalue"],"counter":["2"],"existkey1":["value1"],"existkey2":["value2"]}}
+{"0":{"testkey":["testvalue"],"counter":["2"],"existkey1":["value1"],"existkey2":["value2"]},"1":{"queue":["message2","message3"]}}

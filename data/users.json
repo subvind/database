@@ -1,1 +1,1 @@
-{"testuser":{"username":"testuser","passwordHash":"$2b$10$kL6EoBkhintXuWx4VBpCROiN4A6RyI9RSNbDFUB/rWQhG82D39esK","databases":[0]}}
+{"testuser":{"username":"testuser","passwordHash":"$2b$10$kL6EoBkhintXuWx4VBpCROiN4A6RyI9RSNbDFUB/rWQhG82D39esK","databases":[0]},"mquser":{"username":"mquser","passwordHash":"$2b$10$320U4uwoYFPDlmIhvnpCYuVfltdsgnxTF9igvqJE9OAqLoawL339S","databases":[1]}}

@@ -6,10 +6,15 @@ async function runTests() {
   let accessToken: string;
 
   try {
-    console.log('Creating user and getting access token...');
-    await request(API_URL)
-      .post('/storage/user')
-      .send({ username: 'testuser', password: 'testpass' });
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'testuser', password: 'testpass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
 
     const loginResponse = await request(API_URL)
       .post('/storage/login')

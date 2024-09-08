@@ -272,284 +272,6 @@ export function dot(a: V3, b: V3): number {
 
 You will now be given the actual INPUT you must work with.
 
-<FILE path="/home/travis/Projects/database/src/auth/auth.module.ts">
-import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy';
-import { StorageModule } from '../storage/storage.module';
-
-@Module({
-  imports: [
-    PassportModule,
-    StorageModule,
-  ],
-  providers: [JwtStrategy],
-})
-export class AuthModule {}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/auth/local-auth.guard.ts">
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-
-@Injectable()
-export class LocalAuthGuard extends AuthGuard('local') {}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/auth/jwt-auth.guard.ts">
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-
-@Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
-
-</FILE>
-<FILE path="/home/travis/Projects/database/src/auth/jwt.strategy.ts">
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: 'your_jwt_secret', // In production, use an environment variable
-    });
-  }
-
-  async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username };
-  }
-}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/app.module.ts">
-import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { StorageModule } from './storage/storage.module';
-import { ScheduleModule } from '@nestjs/schedule';
-
-@Module({
-  imports: [
-    StorageModule,
-    AuthModule,
-    ScheduleModule.forRoot(),
-  ],
-})
-export class AppModule {}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/main.ts">
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
-import { CustomLogger } from './logger/custom-logger';
-
-async function bootstrap(logger: CustomLogger) {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
-  await app.listen(6969);
-  console.log('Database is running: http://localhost:6969');
-}
-
-// Create the CustomLogger with the AmqpConnection
-const logger = new CustomLogger('Bootstrap');
-
-bootstrap(logger);
-
-</FILE>
-<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
-import { Module } from '@nestjs/common';
-import { StorageService } from './storage.service';
-import { StorageController } from './storage.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { ScheduleModule } from '@nestjs/schedule';
-
-@Module({
-  imports: [
-    JwtModule.register({
-      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
-      signOptions: { expiresIn: '60m' },
-    }),
-    ScheduleModule.forRoot(),
-  ],
-  providers: [StorageService],
-  controllers: [StorageController],
-  exports: [StorageService],
-})
-export class StorageModule {}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/storage/storage.controller.ts">
-import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { StorageService } from './storage.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { LocalAuthGuard } from '../auth/local-auth.guard';
-
-@Controller('storage')
-export class StorageController {
-  constructor(private readonly storageService: StorageService) {}
-
-  @Post('user')
-  async createUser(@Body('username') username: string, @Body('password') password: string): Promise<string> {
-    await this.storageService.createUser(username, password);
-    return 'User created successfully';
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @Post('login')
-  async login(@Request() req) {
-    return this.storageService.login(req.user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('assign-db')
-  async assignUserToDatabase(@Request() req, @Body('dbIndex') dbIndex: number): Promise<string> {
-    await this.storageService.assignUserToDatabase(req.user.username, dbIndex);
-    return 'User assigned to database successfully';
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('rpush/:dbIndex/:key')
-  async rpush(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Body('values') values: string[]
-  ): Promise<number> {
-    return await this.storageService.rpush(req.user.username, Number(dbIndex), key, ...values);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('lrange/:dbIndex/:key')
-  lrange(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Query('start') start: number,
-    @Query('stop') stop: number,
-  ): string[] {
-    return this.storageService.lrange(req.user.username, Number(dbIndex), key, Number(start), Number(stop));
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('lpop/:dbIndex/:key')
-  async lpop(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string
-  ): Promise<string | null> {
-    return await this.storageService.lpop(req.user.username, Number(dbIndex), key);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('llen/:dbIndex/:key')
-  llen(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string
-  ): number {
-    return this.storageService.llen(req.user.username, Number(dbIndex), key);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('snapshot')
-  async createSnapshot(): Promise<string> {
-    await this.storageService.triggerSnapshot();
-    return 'Snapshot created successfully';
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('set/:dbIndex/:key')
-  async set(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Body('value') value: string
-  ): Promise<string> {
-    return await this.storageService.set(req.user.username, Number(dbIndex), key, value);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('get/:dbIndex/:key')
-  get(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string
-  ): string | null {
-    return this.storageService.get(req.user.username, Number(dbIndex), key);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('incr/:dbIndex/:key')
-  async incr(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string
-  ): Promise<number> {
-    return await this.storageService.incr(req.user.username, Number(dbIndex), key);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('sadd/:dbIndex/:key')
-  async sadd(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Body('members') members: string[]
-  ): Promise<number> {
-    return await this.storageService.sadd(req.user.username, Number(dbIndex), key, ...members);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('smembers/:dbIndex/:key')
-  smembers(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string
-  ): string[] {
-    return this.storageService.smembers(req.user.username, Number(dbIndex), key);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('sismember/:dbIndex/:key/:member')
-  sismember(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Param('member') member: string
-  ): boolean {
-    return this.storageService.sismember(req.user.username, Number(dbIndex), key, member);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('del/:dbIndex')
-  async del(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Body('keys') keys: string[]
-  ): Promise<number> {
-    return await this.storageService.del(req.user.username, Number(dbIndex), ...keys);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('exists/:dbIndex')
-  exists(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Query('keys') keys: string[]
-  ): number {
-    return this.storageService.exists(req.user.username, Number(dbIndex), ...keys);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('expire/:dbIndex/:key')
-  async expire(
-    @Request() req,
-    @Param('dbIndex') dbIndex: number,
-    @Param('key') key: string,
-    @Body('seconds') seconds: number
-  ): Promise<boolean> {
-    return await this.storageService.expire(req.user.username, Number(dbIndex), key, seconds);
-  }
-}
-</FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.service.ts">
 import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -567,9 +289,9 @@ interface User {
 export class StorageService implements OnModuleInit, OnModuleDestroy {
   private databases: Map<number, Map<string, any>> = new Map();
   private users: Map<string, User> = new Map();
-  private walFile: string = 'wal.log';
-  private snapshotFile: string = 'snapshot.json';
-  private usersFile: string = 'users.json';
+  private walFile: string = 'data/wal.log';
+  private snapshotFile: string = 'data/snapshot.json';
+  private usersFile: string = 'data/users.json';
   private walStream: fs.FileHandle | null = null;
 
   constructor(private jwtService: JwtService) {}
@@ -786,10 +508,10 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     let value = db.get(key);
     if (!value) {
       value = ['0'];
-    } else if (!Array.isArray(value) || typeof parseInt(value[0]) !== 'number') {
+    } else if (!Array.isArray(value) || typeof Number(value[0]) !== 'number') {
       throw new Error('Value is not a number');
     }
-    let number = parseInt(value[0]) + 1;
+    let number = Number(value[0]) + 1;
     value[0] = `${number}`;
     db.set(key, value);
     await this.appendToWAL('incr', username, dbIndex, key);
@@ -888,207 +610,28 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
   }
 }
 </FILE>
-<FILE path="/home/travis/Projects/database/test:key-value.stdout.txt">
-Creating user and getting access token...
-Assigning user to database 0...
-Testing set and get operations...
-Set response status: 401
-Set response text: {"message":"Unauthorized","statusCode":401}
-Get response status: 401
-Get response text: {"message":"Unauthorized","statusCode":401}
-Testing increment operation...
-Increment response status: 401
-Increment response text: {"message":"Unauthorized","statusCode":401}
-Get incremented value status: 401
-Get incremented value text: {"message":"Unauthorized","statusCode":401}
-Testing delete operation...
-Delete response status: 401
-Delete response text: {"message":"Unauthorized","statusCode":401}
-Get deleted key status: 401
-Get deleted key text: {"message":"Unauthorized","statusCode":401}
-Testing exists operation...
-Exists response status: 401
-Exists response text: {"message":"Unauthorized","statusCode":401}
-Testing expiration operation...
-Expire response status: 401
-Expire response text: {"message":"Unauthorized","statusCode":401}
-Waiting for 2 seconds...
-Get expired key status: 401
-Get expired key text: {"message":"Unauthorized","statusCode":401}
-All tests completed successfully.
+<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
+import { Module } from '@nestjs/common';
+import { StorageService } from './storage.service';
+import { StorageController } from './storage.controller';
+import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 
+@Module({
+  imports: [
+    JwtModule.register({
+      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
+      signOptions: { expiresIn: '60m' },
+    }),
+    ScheduleModule.forRoot(),
+  ],
+  providers: [StorageService],
+  controllers: [StorageController],
+  exports: [StorageService],
+})
+export class StorageModule {}
 </FILE>
-<FILE path="/home/travis/Projects/database/start:dev.stdout.txt">
-c[[90m12:32:50 PM[0m] Starting compilation in watch mode...
-
-[[90m12:32:52 PM[0m] Found 0 errors. Watching for file changes.
-
-[2024-09-08T17:32:52.286Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T17:32:52.295Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T17:32:52.296Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
-[2024-09-08T17:32:52.296Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
-[2024-09-08T17:32:52.297Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T17:32:52.300Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
-[2024-09-08T17:32:52.302Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
-[2024-09-08T17:32:52.302Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
-[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
-[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
-[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
-[2024-09-08T17:32:52.303Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
-[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
-[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
-[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
-[2024-09-08T17:32:52.304Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
-[2024-09-08T17:32:52.305Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
-No snapshot found or error loading snapshot
-No users file found or error loading users
-[2024-09-08T17:32:52.315Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
-Database is running: http://localhost:6969
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-c[[90m12:34:31 PM[0m] File change detected. Starting incremental compilation...
-
-[[90m12:34:31 PM[0m] Found 0 errors. Watching for file changes.
-
-[2024-09-08T17:34:31.987Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T17:34:31.994Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
-[2024-09-08T17:34:31.995Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
-[2024-09-08T17:34:31.995Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T17:34:31.997Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
-[2024-09-08T17:34:31.998Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
-[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
-[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
-[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
-[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
-[2024-09-08T17:34:31.999Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
-[2024-09-08T17:34:32.000Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
-[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
-[2024-09-08T17:34:32.001Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
-[2024-09-08T17:34:32.007Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
-Database is running: http://localhost:6969
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-c[[90m12:38:39 PM[0m] File change detected. Starting incremental compilation...
-
-[[90m12:38:39 PM[0m] Found 0 errors. Watching for file changes.
-
-[2024-09-08T17:38:40.183Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T17:38:40.192Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T17:38:40.193Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T17:38:40.193Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T17:38:40.193Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T17:38:40.193Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
-[2024-09-08T17:38:40.194Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
-[2024-09-08T17:38:40.195Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T17:38:40.198Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
-[2024-09-08T17:38:40.199Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
-[2024-09-08T17:38:40.199Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
-[2024-09-08T17:38:40.200Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
-[2024-09-08T17:38:40.200Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.200Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
-[2024-09-08T17:38:40.201Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.201Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
-[2024-09-08T17:38:40.201Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
-[2024-09-08T17:38:40.201Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.201Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
-[2024-09-08T17:38:40.202Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
-[2024-09-08T17:38:40.212Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
-Database is running: http://localhost:6969
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-[2024-09-08T17:43:44.833Z] [ERROR] [Bootstrap] [ExceptionsHandler] Unknown authentication strategy "local"
-[2024-09-08T17:43:44.833Z] [ERROR] [Bootstrap] [ExceptionsHandler] Error: Unknown authentication strategy "local"
-    at attempt (/home/travis/Projects/database/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/home/travis/Projects/database/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /home/travis/Projects/database/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /home/travis/Projects/database/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at LocalAuthGuard.canActivate (/home/travis/Projects/database/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-
-</FILE>
-<FILE path="test/key-value.test.ts" TARGET>
+<FILE path="/home/travis/Projects/database/test/key-value.test.ts">
 import * as request from 'supertest';
 
 const API_URL = 'http://localhost:6969';
@@ -1097,10 +640,15 @@ async function runTests() {
   let accessToken: string;
 
   try {
-    console.log('Creating user and getting access token...');
-    await request(API_URL)
-      .post('/storage/user')
-      .send({ username: 'testuser', password: 'testpass' });
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'testuser', password: 'testpass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
 
     const loginResponse = await request(API_URL)
       .post('/storage/login')
@@ -1130,11 +678,11 @@ async function runTests() {
     console.log('Get response status:', getResponse.status);
     console.log('Get response text:', getResponse.text);
 
-    console.log('Testing increment operation...');
+    console.log('Testing increment operation: starting from 1...');
     await request(API_URL)
       .post('/storage/set/0/counter')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: '10' });
+      .send({ value: '1' });
 
     const incrResponse = await request(API_URL)
       .post('/storage/incr/0/counter')
@@ -1221,6 +769,169 @@ async function runTests() {
 
 runTests();
 </FILE>
+<FILE path="/home/travis/Projects/database/test/session-cache.test.ts">
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/app.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { StorageModule } from './storage/storage.module';
+import { ScheduleModule } from '@nestjs/schedule';
+
+@Module({
+  imports: [
+    StorageModule,
+    AuthModule,
+    ScheduleModule.forRoot(),
+  ],
+})
+export class AppModule {}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/main.ts">
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app.module';
+import { CustomLogger } from './logger/custom-logger';
+
+async function bootstrap(logger: CustomLogger) {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
+  await app.listen(6969);
+  console.log('Database is running: http://localhost:6969');
+}
+
+// Create the CustomLogger with the AmqpConnection
+const logger = new CustomLogger('Bootstrap');
+
+bootstrap(logger);
+
+</FILE>
+<FILE path="/home/travis/Projects/database/test:key-value.stdout.txt">
+Creating user and getting access token...
+Assigning user to database 0...
+Testing set and get operations...
+Set response status: 201
+Set response text: OK
+Get response status: 200
+Get response text: testvalue
+Testing increment operation: starting from 1...
+Increment response status: 201
+Increment response text: 2
+Get incremented value status: 200
+Get incremented value text: 2
+Testing delete operation...
+Delete response status: 201
+Delete response text: 1
+Get deleted key status: 200
+Get deleted key text: 
+Testing exists operation...
+Exists response status: 200
+Exists response text: 2
+Testing expiration operation...
+Expire response status: 201
+Expire response text: true
+Waiting for 2 seconds...
+Get expired key status: 200
+Get expired key text: 
+All tests completed successfully.
+
+</FILE>
+<FILE path="/home/travis/Projects/database/start:dev.stdout.txt">
+c[[90m1:02:57 PM[0m] Starting compilation in watch mode...
+
+[[90m1:02:58 PM[0m] Found 0 errors. Watching for file changes.
+
+[2024-09-08T18:02:59.068Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
+[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
+[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-08T18:02:59.082Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
+[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
+[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
+[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
+[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
+[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
+[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
+[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
+[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
+[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
+[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
+[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
+No snapshot found or error loading snapshot
+No users file found or error loading users
+No WAL found or error replaying WAL
+[2024-09-08T18:02:59.095Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+Database is running: http://localhost:6969
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+[2024-09-08T18:05:45.027Z] [ERROR] [Bootstrap] [ExceptionsHandler] User already exists
+[2024-09-08T18:05:45.027Z] [ERROR] [Bootstrap] [ExceptionsHandler] Error: User already exists
+    at StorageService.createUser (/home/travis/Projects/database/src/storage/storage.service.ts:110:13)
+    at StorageController.createUser (/home/travis/Projects/database/src/storage/storage.controller.ts:12:31)
+    at /home/travis/Projects/database/node_modules/@nestjs/core/router/router-execution-context.js:38:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async /home/travis/Projects/database/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async /home/travis/Projects/database/node_modules/@nestjs/core/router/router-proxy.js:9:17
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+Generating snapshot...
+Snapshot generated successfully.
+
+</FILE>
+<FILE path="test/message-queue.test.ts" TARGET>
+(empty file)
+</FILE>
 <REQUEST>
-in stdout Unknown authentication strategy 'local'
+write a test similar to the other test that checks the functionality of rpush, lpop, lrange, and llen for a message queue
 </REQUEST>
