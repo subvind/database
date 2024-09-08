@@ -1,37 +1,32 @@
-c[[90m12:26:39 PM[0m] Starting compilation in watch mode...
+c[[90m12:28:51 PM[0m] Starting compilation in watch mode...
 
-[[90m12:26:41 PM[0m] Found 0 errors. Watching for file changes.
+[[90m12:28:52 PM[0m] Found 0 errors. Watching for file changes.
 
-[2024-09-08T17:26:41.516Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T17:26:41.526Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T17:26:41.526Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T17:26:41.527Z] [ERROR] [Bootstrap] [ExceptionHandler] Nest can't resolve dependencies of the StorageService (?). Please make sure that the argument JwtService at index [0] is available in the StorageModule context.
-
-Potential solutions:
-- Is StorageModule a valid NestJS module?
-- If JwtService is a provider, is it part of the current StorageModule?
-- If JwtService is exported from a separate @Module, is that module imported within StorageModule?
-  @Module({
-    imports: [ /* the Module containing JwtService */ ]
-  })
-
-[2024-09-08T17:26:41.527Z] [ERROR] [Bootstrap] [ExceptionHandler] Error: Nest can't resolve dependencies of the StorageService (?). Please make sure that the argument JwtService at index [0] is available in the StorageModule context.
-
-Potential solutions:
-- Is StorageModule a valid NestJS module?
-- If JwtService is a provider, is it part of the current StorageModule?
-- If JwtService is exported from a separate @Module, is that module imported within StorageModule?
-  @Module({
-    imports: [ /* the Module containing JwtService */ ]
-  })
-
-    at Injector.lookupComponentInParentModules (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:254:19)
-    at async Injector.resolveComponentInstance (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:207:33)
-    at async resolveParam (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:128:38)
-    at async Promise.all (index 0)
-    at async Injector.resolveConstructorParams (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:143:27)
-    at async Injector.loadInstance (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:70:13)
-    at async Injector.loadProvider (/home/travis/Projects/database/node_modules/@nestjs/core/injector/injector.js:97:9)
-    at async /home/travis/Projects/database/node_modules/@nestjs/core/injector/instance-loader.js:56:13
-    at async Promise.all (index 3)
-    at async InstanceLoader.createInstancesOfProviders (/home/travis/Projects/database/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+[2024-09-08T17:28:52.810Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-08T17:28:52.819Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-08T17:28:52.822Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/redis-clone}:
+[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/user, POST} route
+[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/login, POST} route
+[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/assign-db, POST} route
+[2024-09-08T17:28:52.824Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/rpush/:dbIndex/:key, POST} route
+[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lrange/:dbIndex/:key, GET} route
+[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/lpop/:dbIndex/:key, POST} route
+[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/llen/:dbIndex/:key, GET} route
+[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/snapshot, POST} route
+[2024-09-08T17:28:52.825Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/set/:dbIndex/:key, POST} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/get/:dbIndex/:key, GET} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/incr/:dbIndex/:key, POST} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sadd/:dbIndex/:key, POST} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/smembers/:dbIndex/:key, GET} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/del/:dbIndex, POST} route
+[2024-09-08T17:28:52.826Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/exists/:dbIndex, GET} route
+[2024-09-08T17:28:52.827Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/redis-clone/expire/:dbIndex/:key, POST} route
+No snapshot found or error loading snapshot
+No users file found or error loading users
+[2024-09-08T17:28:52.829Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+Database is running: http://localhost:6969

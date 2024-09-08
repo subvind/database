@@ -1,18 +1,13 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { StorageService } from '../storage/storage.service';
 import { JwtStrategy } from './jwt.strategy';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
-      signOptions: { expiresIn: '60m' },
-    }),
+    StorageModule,
   ],
-  providers: [StorageService, JwtStrategy],
-  exports: [StorageService],
+  providers: [JwtStrategy],
 })
 export class AuthModule {}
