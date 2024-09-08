@@ -1,0 +1,15 @@
+Creating user or logging in for testuser1_record_perm...
+User testuser1_record_perm created successfully.
+Creating user or logging in for testuser2_record_perm...
+User testuser2_record_perm created successfully.
+Testing record CRUD permissions...
+User assigned to database 30 successfully.
+User assigned to database 31 successfully.
+Test passed: User1 successfully created a record in their database.
+Test passed: User2 correctly denied reading User1's record.
+Test passed: User2 correctly denied updating User1's record.
+Test passed: User2 correctly denied deleting User1's record.
+Test passed: User1 successfully read their own record.
+Test passed: User1 successfully updated their own record.
+Test passed: User1 successfully deleted their own record.
+All record permission CRUD tests completed.

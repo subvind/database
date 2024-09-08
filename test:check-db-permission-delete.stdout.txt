@@ -1,0 +1,22 @@
+Creating user or logging in for testuser1_del_perm...
+User testuser1_del_perm already exists, proceeding to login.
+Creating user or logging in for testuser2_del_perm...
+User testuser2_del_perm already exists, proceeding to login.
+Testing database deletion permissions...
+User assigned to database 20 successfully.
+User assigned to database 21 successfully.
+Failed to delete database 20: [object Object]
+Test passed: User2 correctly denied deletion of User1's database (20).
+Failed to delete database 21: [object Object]
+Test passed: User1 correctly denied deletion of User2's database (21).
+User1 databases after attempted deletions: [ 20 ]
+User2 databases after attempted deletions: [ 21 ]
+Database 20 deleted successfully.
+Test passed: User1 successfully deleted their own database (20).
+Database 21 deleted successfully.
+Test passed: User2 successfully deleted their own database (21).
+User1 databases after deletions: []
+User2 databases after deletions: []
+Test passed: Database assignments are correct after deletions.
+Test passed: Database assignments are correct after attempted deletions.
+All database deletion permission tests completed.

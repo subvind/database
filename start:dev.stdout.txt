@@ -1,39 +1,41 @@
-c[[90m3:39:32 PM[0m] Starting compilation in watch mode...
+c[[90m4:34:47 PM[0m] Starting compilation in watch mode...
 
-[[90m3:39:34 PM[0m] Found 0 errors. Watching for file changes.
+[[90m4:34:49 PM[0m] Found 0 errors. Watching for file changes.
 
-[2024-09-08T20:39:34.364Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T20:39:34.375Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T20:39:34.375Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T20:39:34.375Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T20:39:34.375Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
-[2024-09-08T20:39:34.376Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
-[2024-09-08T20:39:34.376Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T20:39:34.377Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T20:39:34.379Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
-[2024-09-08T20:39:34.381Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
-[2024-09-08T20:39:34.381Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
-[2024-09-08T20:39:34.382Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
-[2024-09-08T20:39:34.382Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.382Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
-[2024-09-08T20:39:34.382Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.382Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
-[2024-09-08T20:39:34.383Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
-[2024-09-08T20:39:34.383Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.383Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
-[2024-09-08T20:39:34.383Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex, DELETE} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex/info, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user/info, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/databases, GET} route
-[2024-09-08T20:39:34.384Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/users, GET} route
-[2024-09-08T20:39:34.394Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+[2024-09-08T21:34:49.261Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-08T21:34:49.272Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-08T21:34:49.272Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-08T21:34:49.272Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-08T21:34:49.272Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
+[2024-09-08T21:34:49.273Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
+[2024-09-08T21:34:49.273Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-08T21:34:49.274Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-08T21:34:49.277Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
+[2024-09-08T21:34:49.278Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
+[2024-09-08T21:34:49.279Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
+[2024-09-08T21:34:49.279Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
+[2024-09-08T21:34:49.279Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.279Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
+[2024-09-08T21:34:49.280Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.280Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
+[2024-09-08T21:34:49.280Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
+[2024-09-08T21:34:49.280Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.280Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex, DELETE} route
+[2024-09-08T21:34:49.281Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex/info, GET} route
+[2024-09-08T21:34:49.282Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user/info, GET} route
+[2024-09-08T21:34:49.283Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/databases, GET} route
+[2024-09-08T21:34:49.283Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/users, GET} route
+[2024-09-08T21:34:49.292Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
 Database is running: http://localhost:6969
+Generating snapshot...
+Snapshot generated successfully.
 Generating snapshot...
 Snapshot generated successfully.

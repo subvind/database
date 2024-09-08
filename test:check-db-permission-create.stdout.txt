@@ -1,0 +1,15 @@
+Creating user or logging in for testuser1_perm...
+User testuser1_perm already exists, proceeding to login.
+Creating user or logging in for testuser2_perm...
+User testuser2_perm already exists, proceeding to login.
+Testing database permissions...
+User assigned to database 10 successfully.
+Test passed: User1 successfully assigned to database 10.
+Failed to assign user to database 10: [object Object]
+Test passed: User2 correctly denied assignment to database 10.
+User assigned to database 11 successfully.
+Test passed: User2 successfully assigned to database 11.
+User1 databases: [ 10 ]
+User2 databases: [ 11 ]
+Test passed: Database assignments are correct for both users.
+All permission tests completed.
