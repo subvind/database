@@ -272,6 +272,232 @@ export function dot(a: V3, b: V3): number {
 
 You will now be given the actual INPUT you must work with.
 
+<FILE path="/home/travis/Projects/database/test/key-value.test.ts">
+import * as request from 'supertest';
+
+const API_URL = 'http://localhost:6969';
+
+async function runTests() {
+  let accessToken: string;
+
+  try {
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'testuser', password: 'testpass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
+
+    const loginResponse = await request(API_URL)
+      .post('/storage/login')
+      .send({ username: 'testuser', password: 'testpass' });
+
+    accessToken = loginResponse.body.access_token;
+
+    console.log('Assigning user to database 0...');
+    await request(API_URL)
+      .post('/storage/assign-db')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ dbIndex: 0 });
+
+    console.log('Testing set and get operations...');
+    const setResponse = await request(API_URL)
+      .post('/storage/set/0/testkey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'testvalue' });
+
+    console.log('Set response status:', setResponse.status);
+    console.log('Set response text:', setResponse.text);
+
+    const getResponse = await request(API_URL)
+      .get('/storage/get/0/testkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get response status:', getResponse.status);
+    console.log('Get response text:', getResponse.text);
+
+    console.log('Testing increment operation: starting from 1...');
+    await request(API_URL)
+      .post('/storage/set/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: '1' });
+
+    const incrResponse = await request(API_URL)
+      .post('/storage/incr/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Increment response status:', incrResponse.status);
+    console.log('Increment response text:', incrResponse.text);
+
+    const getIncrResponse = await request(API_URL)
+      .get('/storage/get/0/counter')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get incremented value status:', getIncrResponse.status);
+    console.log('Get incremented value text:', getIncrResponse.text);
+
+    console.log('Testing delete operation...');
+    await request(API_URL)
+      .post('/storage/set/0/deletekey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'to be deleted' });
+
+    const deleteResponse = await request(API_URL)
+      .post('/storage/del/0')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ keys: ['deletekey'] });
+
+    console.log('Delete response status:', deleteResponse.status);
+    console.log('Delete response text:', deleteResponse.text);
+
+    const getDeletedResponse = await request(API_URL)
+      .get('/storage/get/0/deletekey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get deleted key status:', getDeletedResponse.status);
+    console.log('Get deleted key text:', getDeletedResponse.text);
+
+    console.log('Testing exists operation...');
+    await request(API_URL)
+      .post('/storage/set/0/existkey1')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'value1' });
+
+    await request(API_URL)
+      .post('/storage/set/0/existkey2')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'value2' });
+
+    const existsResponse = await request(API_URL)
+      .get('/storage/exists/0?keys=existkey1&keys=existkey2&keys=nonexistentkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Exists response status:', existsResponse.status);
+    console.log('Exists response text:', existsResponse.text);
+
+    console.log('Testing expiration operation...');
+    await request(API_URL)
+      .post('/storage/set/0/expirekey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'will expire' });
+
+    const expireResponse = await request(API_URL)
+      .post('/storage/expire/0/expirekey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ seconds: 1 });
+
+    console.log('Expire response status:', expireResponse.status);
+    console.log('Expire response text:', expireResponse.text);
+
+    console.log('Waiting for 2 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const getExpiredResponse = await request(API_URL)
+      .get('/storage/get/0/expirekey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get expired key status:', getExpiredResponse.status);
+    console.log('Get expired key text:', getExpiredResponse.text);
+
+    console.log('All tests completed successfully.');
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/test/message-queue.test.ts">
+import * as request from 'supertest';
+
+const API_URL = 'http://localhost:6969';
+
+async function runTests() {
+  let accessToken: string;
+
+  try {
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'mquser', password: 'mqpass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
+
+    const loginResponse = await request(API_URL)
+      .post('/storage/login')
+      .send({ username: 'mquser', password: 'mqpass' });
+
+    accessToken = loginResponse.body.access_token;
+
+    console.log('Assigning user to database 1...');
+    await request(API_URL)
+      .post('/storage/assign-db')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ dbIndex: 1 });
+
+    console.log('Testing rpush operation...');
+    const rpushResponse = await request(API_URL)
+      .post('/storage/rpush/1/queue')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ values: ['message1', 'message2', 'message3'] });
+
+    console.log('RPush response status:', rpushResponse.status);
+    console.log('RPush response text:', rpushResponse.text);
+
+    console.log('Testing llen operation...');
+    const llenResponse = await request(API_URL)
+      .get('/storage/llen/1/queue')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('LLen response status:', llenResponse.status);
+    console.log('LLen response text:', llenResponse.text);
+
+    console.log('Testing lrange operation...');
+    const lrangeResponse = await request(API_URL)
+      .get('/storage/lrange/1/queue?start=0&stop=-1')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('LRange response status:', lrangeResponse.status);
+    console.log('LRange response text:', lrangeResponse.text);
+
+    console.log('Testing lpop operation...');
+    const lpopResponse = await request(API_URL)
+      .post('/storage/lpop/1/queue')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('LPop response status:', lpopResponse.status);
+    console.log('LPop response text:', lpopResponse.text);
+
+    console.log('Checking queue length after lpop...');
+    const llenAfterPopResponse = await request(API_URL)
+      .get('/storage/llen/1/queue')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('LLen after pop response status:', llenAfterPopResponse.status);
+    console.log('LLen after pop response text:', llenAfterPopResponse.text);
+
+    console.log('Checking queue contents after lpop...');
+    const lrangeAfterPopResponse = await request(API_URL)
+      .get('/storage/lrange/1/queue?start=0&stop=-1')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('LRange after pop response status:', lrangeAfterPopResponse.status);
+    console.log('LRange after pop response text:', lrangeAfterPopResponse.text);
+
+    console.log('All tests completed successfully.');
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+}
+
+runTests();
+</FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.service.ts">
 import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -610,6 +836,180 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
   }
 }
 </FILE>
+<FILE path="/home/travis/Projects/database/src/storage/storage.controller.ts">
+import { Controller, Post, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { StorageService } from './storage.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { LocalAuthGuard } from '../auth/local-auth.guard';
+
+@Controller('storage')
+export class StorageController {
+  constructor(private readonly storageService: StorageService) {}
+
+  @Post('user')
+  async createUser(@Body('username') username: string, @Body('password') password: string): Promise<string> {
+    await this.storageService.createUser(username, password);
+    return 'User created successfully';
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Request() req) {
+    return this.storageService.login(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('assign-db')
+  async assignUserToDatabase(@Request() req, @Body('dbIndex') dbIndex: number): Promise<string> {
+    await this.storageService.assignUserToDatabase(req.user.username, dbIndex);
+    return 'User assigned to database successfully';
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('rpush/:dbIndex/:key')
+  async rpush(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('values') values: string[]
+  ): Promise<number> {
+    return await this.storageService.rpush(req.user.username, Number(dbIndex), key, ...values);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('lrange/:dbIndex/:key')
+  lrange(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Query('start') start: number,
+    @Query('stop') stop: number,
+  ): string[] {
+    return this.storageService.lrange(req.user.username, Number(dbIndex), key, Number(start), Number(stop));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('lpop/:dbIndex/:key')
+  async lpop(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): Promise<string | null> {
+    return await this.storageService.lpop(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('llen/:dbIndex/:key')
+  llen(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): number {
+    return this.storageService.llen(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('snapshot')
+  async createSnapshot(): Promise<string> {
+    await this.storageService.triggerSnapshot();
+    return 'Snapshot created successfully';
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('set/:dbIndex/:key')
+  async set(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('value') value: string
+  ): Promise<string> {
+    return await this.storageService.set(req.user.username, Number(dbIndex), key, value);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('get/:dbIndex/:key')
+  get(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): string | null {
+    return this.storageService.get(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('incr/:dbIndex/:key')
+  async incr(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): Promise<number> {
+    return await this.storageService.incr(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('sadd/:dbIndex/:key')
+  async sadd(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('members') members: string[]
+  ): Promise<number> {
+    return await this.storageService.sadd(req.user.username, Number(dbIndex), key, ...members);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('smembers/:dbIndex/:key')
+  smembers(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string
+  ): string[] {
+    return this.storageService.smembers(req.user.username, Number(dbIndex), key);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sismember/:dbIndex/:key/:member')
+  sismember(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Param('member') member: string
+  ): boolean {
+    return this.storageService.sismember(req.user.username, Number(dbIndex), key, member);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('del/:dbIndex')
+  async del(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Body('keys') keys: string[]
+  ): Promise<number> {
+    return await this.storageService.del(req.user.username, Number(dbIndex), ...keys);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('exists/:dbIndex')
+  exists(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Query('keys') keys: string[]
+  ): number {
+    return this.storageService.exists(req.user.username, Number(dbIndex), ...keys);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('expire/:dbIndex/:key')
+  async expire(
+    @Request() req,
+    @Param('dbIndex') dbIndex: number,
+    @Param('key') key: string,
+    @Body('seconds') seconds: number
+  ): Promise<boolean> {
+    return await this.storageService.expire(req.user.username, Number(dbIndex), key, seconds);
+  }
+}
+</FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
 import { Module } from '@nestjs/common';
 import { StorageService } from './storage.service';
@@ -631,146 +1031,49 @@ import { ScheduleModule } from '@nestjs/schedule';
 })
 export class StorageModule {}
 </FILE>
-<FILE path="/home/travis/Projects/database/test/key-value.test.ts">
-import * as request from 'supertest';
+<FILE path="/home/travis/Projects/database/src/auth/auth.module.ts">
+import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './jwt.strategy';
+import { LocalStrategy } from './local.strategy';
+import { StorageModule } from '../storage/storage.module';
 
-const API_URL = 'http://localhost:6969';
+@Module({
+  imports: [
+    PassportModule,
+    StorageModule,
+  ],
+  providers: [JwtStrategy, LocalStrategy],
+})
+export class AuthModule {}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/jwt-auth.guard.ts">
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-async function runTests() {
-  let accessToken: string;
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
 
-  try {
-    console.log('Creating user or logging in...');
-    try {
-      await request(API_URL)
-        .post('/storage/user')
-        .send({ username: 'testuser', password: 'testpass' });
-      console.log('User created successfully.');
-    } catch (error) {
-      console.log('User already exists, proceeding with login.');
-    }
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/jwt.strategy.ts">
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
 
-    const loginResponse = await request(API_URL)
-      .post('/storage/login')
-      .send({ username: 'testuser', password: 'testpass' });
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: 'your_jwt_secret', // In production, use an environment variable
+    });
+  }
 
-    accessToken = loginResponse.body.access_token;
-
-    console.log('Assigning user to database 0...');
-    await request(API_URL)
-      .post('/storage/assign-db')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ dbIndex: 0 });
-
-    console.log('Testing set and get operations...');
-    const setResponse = await request(API_URL)
-      .post('/storage/set/0/testkey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'testvalue' });
-
-    console.log('Set response status:', setResponse.status);
-    console.log('Set response text:', setResponse.text);
-
-    const getResponse = await request(API_URL)
-      .get('/storage/get/0/testkey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get response status:', getResponse.status);
-    console.log('Get response text:', getResponse.text);
-
-    console.log('Testing increment operation: starting from 1...');
-    await request(API_URL)
-      .post('/storage/set/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: '1' });
-
-    const incrResponse = await request(API_URL)
-      .post('/storage/incr/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Increment response status:', incrResponse.status);
-    console.log('Increment response text:', incrResponse.text);
-
-    const getIncrResponse = await request(API_URL)
-      .get('/storage/get/0/counter')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get incremented value status:', getIncrResponse.status);
-    console.log('Get incremented value text:', getIncrResponse.text);
-
-    console.log('Testing delete operation...');
-    await request(API_URL)
-      .post('/storage/set/0/deletekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'to be deleted' });
-
-    const deleteResponse = await request(API_URL)
-      .post('/storage/del/0')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ keys: ['deletekey'] });
-
-    console.log('Delete response status:', deleteResponse.status);
-    console.log('Delete response text:', deleteResponse.text);
-
-    const getDeletedResponse = await request(API_URL)
-      .get('/storage/get/0/deletekey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get deleted key status:', getDeletedResponse.status);
-    console.log('Get deleted key text:', getDeletedResponse.text);
-
-    console.log('Testing exists operation...');
-    await request(API_URL)
-      .post('/storage/set/0/existkey1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'value1' });
-
-    await request(API_URL)
-      .post('/storage/set/0/existkey2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'value2' });
-
-    const existsResponse = await request(API_URL)
-      .get('/storage/exists/0?keys=existkey1&keys=existkey2&keys=nonexistentkey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Exists response status:', existsResponse.status);
-    console.log('Exists response text:', existsResponse.text);
-
-    console.log('Testing expiration operation...');
-    await request(API_URL)
-      .post('/storage/set/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'will expire' });
-
-    const expireResponse = await request(API_URL)
-      .post('/storage/expire/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ seconds: 1 });
-
-    console.log('Expire response status:', expireResponse.status);
-    console.log('Expire response text:', expireResponse.text);
-
-    console.log('Waiting for 2 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const getExpiredResponse = await request(API_URL)
-      .get('/storage/get/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get expired key status:', getExpiredResponse.status);
-    console.log('Get expired key text:', getExpiredResponse.text);
-
-    console.log('All tests completed successfully.');
-  } catch (error) {
-    console.error('Test failed:', error);
+  async validate(payload: any) {
+    return { userId: payload.sub, username: payload.username };
   }
 }
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test/session-cache.test.ts">
-
 </FILE>
 <FILE path="/home/travis/Projects/database/src/app.module.ts">
 import { Module } from '@nestjs/common';
@@ -835,103 +1138,34 @@ Get expired key text:
 All tests completed successfully.
 
 </FILE>
-<FILE path="/home/travis/Projects/database/start:dev.stdout.txt">
-c[[90m1:02:57 PM[0m] Starting compilation in watch mode...
-
-[[90m1:02:58 PM[0m] Found 0 errors. Watching for file changes.
-
-[2024-09-08T18:02:59.068Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
-[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
-[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
-[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
-[2024-09-08T18:02:59.078Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
-[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
-[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
-[2024-09-08T18:02:59.079Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
-[2024-09-08T18:02:59.082Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
-[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
-[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
-[2024-09-08T18:02:59.084Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
-[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
-[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
-[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
-[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
-[2024-09-08T18:02:59.085Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
-[2024-09-08T18:02:59.086Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
-[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
-[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
-[2024-09-08T18:02:59.087Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
-No snapshot found or error loading snapshot
-No users file found or error loading users
-No WAL found or error replaying WAL
-[2024-09-08T18:02:59.095Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
-Database is running: http://localhost:6969
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-[2024-09-08T18:05:45.027Z] [ERROR] [Bootstrap] [ExceptionsHandler] User already exists
-[2024-09-08T18:05:45.027Z] [ERROR] [Bootstrap] [ExceptionsHandler] Error: User already exists
-    at StorageService.createUser (/home/travis/Projects/database/src/storage/storage.service.ts:110:13)
-    at StorageController.createUser (/home/travis/Projects/database/src/storage/storage.controller.ts:12:31)
-    at /home/travis/Projects/database/node_modules/@nestjs/core/router/router-execution-context.js:38:29
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async /home/travis/Projects/database/node_modules/@nestjs/core/router/router-execution-context.js:46:28
-    at async /home/travis/Projects/database/node_modules/@nestjs/core/router/router-proxy.js:9:17
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
-Generating snapshot...
-Snapshot generated successfully.
+<FILE path="/home/travis/Projects/database/test:message-queue.stdout.txt">
+Creating user or logging in...
+User created successfully.
+Assigning user to database 1...
+Testing rpush operation...
+RPush response status: 201
+RPush response text: 3
+Testing llen operation...
+LLen response status: 200
+LLen response text: 3
+Testing lrange operation...
+LRange response status: 200
+LRange response text: ["message1","message2","message3"]
+Testing lpop operation...
+LPop response status: 201
+LPop response text: message1
+Checking queue length after lpop...
+LLen after pop response status: 200
+LLen after pop response text: 2
+Checking queue contents after lpop...
+LRange after pop response status: 200
+LRange after pop response text: ["message2","message3"]
+All tests completed successfully.
 
 </FILE>
-<FILE path="test/message-queue.test.ts" TARGET>
+<FILE path="test/session-cache.test.ts" TARGET>
 (empty file)
 </FILE>
 <REQUEST>
-write a test similar to the other test that checks the functionality of rpush, lpop, lrange, and llen for a message queue
+should be just like the other tests except for checking session cache functionality
 </REQUEST>

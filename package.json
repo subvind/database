@@ -12,7 +12,8 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test:key-value": "ts-node ./test/key-value.test.ts 2>&1 | tee test:key-value.stdout.txt",
-    "test:message-queue": "ts-node ./test/message-queue.test.ts 2>&1 | tee test:message-queue.stdout.txt"
+    "test:message-queue": "ts-node ./test/message-queue.test.ts 2>&1 | tee test:message-queue.stdout.txt",
+    "test:session-cache": "ts-node ./test/session-cache.test.ts 2>&1 | tee test:session-cache.stdout.txt"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

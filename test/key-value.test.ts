@@ -103,30 +103,6 @@ async function runTests() {
     console.log('Exists response status:', existsResponse.status);
     console.log('Exists response text:', existsResponse.text);
 
-    console.log('Testing expiration operation...');
-    await request(API_URL)
-      .post('/storage/set/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ value: 'will expire' });
-
-    const expireResponse = await request(API_URL)
-      .post('/storage/expire/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({ seconds: 1 });
-
-    console.log('Expire response status:', expireResponse.status);
-    console.log('Expire response text:', expireResponse.text);
-
-    console.log('Waiting for 2 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const getExpiredResponse = await request(API_URL)
-      .get('/storage/get/0/expirekey')
-      .set('Authorization', `Bearer ${accessToken}`);
-
-    console.log('Get expired key status:', getExpiredResponse.status);
-    console.log('Get expired key text:', getExpiredResponse.text);
-
     console.log('All tests completed successfully.');
   } catch (error) {
     console.error('Test failed:', error);
