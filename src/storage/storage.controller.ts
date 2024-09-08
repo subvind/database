@@ -9,8 +9,7 @@ export class StorageController {
 
   @Post('user')
   async createUser(@Body('username') username: string, @Body('password') password: string): Promise<string> {
-    await this.storageService.createUser(username, password);
-    return 'User created successfully';
+    return await this.storageService.createUser(username, password);
   }
 
   @UseGuards(LocalAuthGuard)

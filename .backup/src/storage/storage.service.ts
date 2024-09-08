@@ -150,7 +150,15 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
 
   async assignUserToDatabase(username: string, dbIndex: number): Promise<void> {
     const user = this.users.get(username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new UnauthorizedException('User not found');
+    
+    // Check if the database is already assigned to another user
+    for (const [otherUsername, otherUser] of this.users.entries()) {
+      if (otherUsername !== username && otherUser.databases.includes(dbIndex)) {
+        throw new ForbiddenException('Database already assigned to another user');
+      }
+    }
+    
     if (!user.databases.includes(dbIndex)) {
       user.databases.push(dbIndex);
       await this.saveUsers();
@@ -348,11 +356,18 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
 
   async deleteDatabase(username: string, dbIndex: number): Promise<void> {
     const user = this.users.get(username);
-    if (!user) throw new UnauthorizedException('User not found');
-    if (!user.databases.includes(dbIndex)) throw new ForbiddenException('User does not have access to this database');
+    if (!this.checkUserAccess(username, dbIndex)) {
+      throw new UnauthorizedException('User does not have access to this database');
+    }
 
     this.databases.delete(dbIndex);
     user.databases = user.databases.filter(db => db !== dbIndex);
+    
+    // Remove this database from all users
+    for (const otherUser of this.users.values()) {
+      otherUser.databases = otherUser.databases.filter(db => db !== dbIndex);
+    }
+    
     await this.saveUsers();
     await this.appendToWAL('deleteDatabase', username, dbIndex);
   }

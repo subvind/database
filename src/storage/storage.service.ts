@@ -105,10 +105,10 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     const userData = JSON.stringify(Object.fromEntries(this.users));
     await fs.writeFile(this.usersFile, userData);
   }
-
-  async createUser(username: string, password: string): Promise<void> {
+  
+  async createUser(username: string, password: string): Promise<string> {
     if (this.users.has(username)) {
-      throw new Error('User already exists');
+      return 'User already exists';
     }
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -130,6 +130,7 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     };
     this.users.set(username, newUser);
     await this.saveUsers();
+    return 'User created successfully';
   }
 
   async validateUser(username: string, password: string): Promise<any> {

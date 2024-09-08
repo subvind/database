@@ -272,41 +272,303 @@ export function dot(a: V3, b: V3): number {
 
 You will now be given the actual INPUT you must work with.
 
-<FILE path="/home/travis/Projects/database/src/app.module.ts">
-import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { StorageModule } from './storage/storage.module';
-import { ScheduleModule } from '@nestjs/schedule';
+<FILE path="/home/travis/Projects/database/client/index.ts">
+import axios, { AxiosInstance } from 'axios';
 
-@Module({
-  imports: [
-    StorageModule,
-    AuthModule,
-    ScheduleModule.forRoot(),
-  ],
-})
-export class AppModule {}
+export class DatabaseClient {
+  private axiosInstance: AxiosInstance;
+  private token: string | null = null;
+
+  constructor(baseURL: string) {
+    this.axiosInstance = axios.create({
+      baseURL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  private getAuthHeader() {
+    return this.token ? { Authorization: `Bearer ${this.token}` } : {};
+  }
+
+  async createUser(username: string, password: string): Promise<string> {
+    const response = await this.axiosInstance.post('/storage/user', { username, password });
+    return response.data;
+  }
+
+  async login(username: string, password: string): Promise<void> {
+    const response = await this.axiosInstance.post('/storage/login', { username, password });
+    this.token = response.data.access_token;
+  }
+
+  async assignUserToDatabase(dbIndex: number): Promise<string> {
+    const response = await this.axiosInstance.post('/storage/assign-db', { dbIndex }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async rpush(dbIndex: number, key: string, values: string[]): Promise<number> {
+    const response = await this.axiosInstance.post(`/storage/rpush/${dbIndex}/${key}`, { values }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async lrange(dbIndex: number, key: string, start: number, stop: number): Promise<string[]> {
+    const response = await this.axiosInstance.get(`/storage/lrange/${dbIndex}/${key}`, {
+      params: { start, stop },
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async lpop(dbIndex: number, key: string): Promise<string | null> {
+    const response = await this.axiosInstance.post(`/storage/lpop/${dbIndex}/${key}`, {}, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async llen(dbIndex: number, key: string): Promise<number> {
+    const response = await this.axiosInstance.get(`/storage/llen/${dbIndex}/${key}`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async createSnapshot(): Promise<string> {
+    const response = await this.axiosInstance.post('/storage/snapshot', {}, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async set(dbIndex: number, key: string, value: string): Promise<string> {
+    const response = await this.axiosInstance.post(`/storage/set/${dbIndex}/${key}`, { value }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async get(dbIndex: number, key: string): Promise<string | null> {
+    const response = await this.axiosInstance.get(`/storage/get/${dbIndex}/${key}`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async incr(dbIndex: number, key: string): Promise<number> {
+    const response = await this.axiosInstance.post(`/storage/incr/${dbIndex}/${key}`, {}, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async sadd(dbIndex: number, key: string, members: string[]): Promise<number> {
+    const response = await this.axiosInstance.post(`/storage/sadd/${dbIndex}/${key}`, { members }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async smembers(dbIndex: number, key: string): Promise<string[]> {
+    const response = await this.axiosInstance.get(`/storage/smembers/${dbIndex}/${key}`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async sismember(dbIndex: number, key: string, member: string): Promise<boolean> {
+    const response = await this.axiosInstance.get(`/storage/sismember/${dbIndex}/${key}/${member}`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async del(dbIndex: number, keys: string[]): Promise<number> {
+    const response = await this.axiosInstance.post(`/storage/del/${dbIndex}`, { keys }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async exists(dbIndex: number, keys: string[]): Promise<number> {
+    const response = await this.axiosInstance.get(`/storage/exists/${dbIndex}`, {
+      params: { keys },
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async expire(dbIndex: number, key: string, seconds: number): Promise<boolean> {
+    const response = await this.axiosInstance.post(`/storage/expire/${dbIndex}/${key}`, { seconds }, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async deleteDatabase(dbIndex: number): Promise<string> {
+    const response = await this.axiosInstance.delete(`/storage/database/${dbIndex}`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async getDatabaseInfo(dbIndex: number): Promise<any> {
+    const response = await this.axiosInstance.get(`/storage/database/${dbIndex}/info`, {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async getUserInfo(): Promise<any> {
+    const response = await this.axiosInstance.get('/storage/user/info', {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async listDatabases(): Promise<number[]> {
+    const response = await this.axiosInstance.get('/storage/databases', {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+
+  async listUsers(): Promise<string[]> {
+    const response = await this.axiosInstance.get('/storage/users', {
+      headers: this.getAuthHeader(),
+    });
+    return response.data;
+  }
+}
 </FILE>
-<FILE path="/home/travis/Projects/database/src/storage/storage.module.ts">
+<FILE path="/home/travis/Projects/database/test/session-cache.test.ts">
+import * as request from 'supertest';
+
+const API_URL = 'http://localhost:6969';
+
+async function runTests() {
+  let accessToken: string;
+
+  try {
+    console.log('Creating user or logging in...');
+    try {
+      await request(API_URL)
+        .post('/storage/user')
+        .send({ username: 'cacheuser', password: 'cachepass' });
+      console.log('User created successfully.');
+    } catch (error) {
+      console.log('User already exists, proceeding with login.');
+    }
+
+    const loginResponse = await request(API_URL)
+      .post('/storage/login')
+      .send({ username: 'cacheuser', password: 'cachepass' });
+
+    accessToken = loginResponse.body.access_token;
+
+    console.log('Assigning user to database 2...');
+    await request(API_URL)
+      .post('/storage/assign-db')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ dbIndex: 2 });
+
+    console.log('Testing session set operation...');
+    const setResponse = await request(API_URL)
+      .post('/storage/set/2/sessionkey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'sessionvalue' });
+
+    console.log('Session set response status:', setResponse.status);
+    console.log('Session set response text:', setResponse.text);
+
+    console.log('Testing session get operation...');
+    const getResponse = await request(API_URL)
+      .get('/storage/get/2/sessionkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Session get response status:', getResponse.status);
+    console.log('Session get response text:', getResponse.text);
+
+    console.log('Testing session delete operation...');
+    const deleteResponse = await request(API_URL)
+      .post('/storage/del/2')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ keys: ['sessionkey'] });
+
+    console.log('Session delete response status:', deleteResponse.status);
+    console.log('Session delete response text:', deleteResponse.text);
+
+    console.log('Verifying session key deletion...');
+    const getDeletedResponse = await request(API_URL)
+      .get('/storage/get/2/sessionkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get deleted session key status:', getDeletedResponse.status);
+    console.log('Get deleted session key text:', getDeletedResponse.text);
+
+    console.log('Testing session expiration...');
+    await request(API_URL)
+      .post('/storage/set/2/expiringkey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ value: 'expiringvalue' });
+
+    await request(API_URL)
+      .post('/storage/expire/2/expiringkey')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ seconds: 2 });
+
+    console.log('Waiting for 3 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    const getExpiredResponse = await request(API_URL)
+      .get('/storage/get/2/expiringkey')
+      .set('Authorization', `Bearer ${accessToken}`);
+
+    console.log('Get expired session key status:', getExpiredResponse.status);
+    console.log('Get expired session key text:', getExpiredResponse.text);
+
+    console.log('All session cache tests completed successfully.');
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+}
+
+runTests();
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/auth.module.ts">
 import { Module } from '@nestjs/common';
-import { StorageService } from './storage.service';
-import { StorageController } from './storage.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { ScheduleModule } from '@nestjs/schedule';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './jwt.strategy';
+import { LocalStrategy } from './local.strategy';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: 'your_jwt_secret', // TODO: In production, use an environment variable
-      signOptions: { expiresIn: '60m' },
-    }),
-    ScheduleModule.forRoot(),
+    PassportModule,
+    StorageModule,
   ],
-  providers: [StorageService],
-  controllers: [StorageController],
-  exports: [StorageService],
+  providers: [JwtStrategy, LocalStrategy],
 })
-export class StorageModule {}
+export class AuthModule {}
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/jwt-auth.guard.ts">
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+
+</FILE>
+<FILE path="/home/travis/Projects/database/src/auth/local-auth.guard.ts">
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class LocalAuthGuard extends AuthGuard('local') {}
 </FILE>
 <FILE path="/home/travis/Projects/database/src/storage/storage.service.ts">
 import { Injectable, OnModuleInit, OnModuleDestroy, UnauthorizedException, ForbiddenException } from '@nestjs/common';
@@ -416,10 +678,10 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     const userData = JSON.stringify(Object.fromEntries(this.users));
     await fs.writeFile(this.usersFile, userData);
   }
-
-  async createUser(username: string, password: string): Promise<void> {
+  
+  async createUser(username: string, password: string): Promise<string> {
     if (this.users.has(username)) {
-      throw new Error('User already exists');
+      return 'User already exists';
     }
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -441,6 +703,7 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     };
     this.users.set(username, newUser);
     await this.saveUsers();
+    return 'User created successfully';
   }
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -726,8 +989,7 @@ export class StorageController {
 
   @Post('user')
   async createUser(@Body('username') username: string, @Body('password') password: string): Promise<string> {
-    await this.storageService.createUser(username, password);
-    return 'User created successfully';
+    return await this.storageService.createUser(username, password);
   }
 
   @UseGuards(LocalAuthGuard)
@@ -925,655 +1187,198 @@ export class StorageController {
   }
 }
 </FILE>
-<FILE path="/home/travis/Projects/database/src/auth/auth.module.ts">
+<FILE path="/home/travis/Projects/database/src/app.module.ts">
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy';
-import { LocalStrategy } from './local.strategy';
-import { StorageModule } from '../storage/storage.module';
+import { AuthModule } from './auth/auth.module';
+import { StorageModule } from './storage/storage.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
-    PassportModule,
     StorageModule,
+    AuthModule,
+    ScheduleModule.forRoot(),
   ],
-  providers: [JwtStrategy, LocalStrategy],
 })
-export class AuthModule {}
+export class AppModule {}
 </FILE>
-<FILE path="/home/travis/Projects/database/src/auth/jwt-auth.guard.ts">
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+<FILE path="/home/travis/Projects/database/src/main.ts">
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app.module';
+import { CustomLogger } from './logger/custom-logger';
 
-@Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
-
-</FILE>
-<FILE path="/home/travis/Projects/database/src/auth/local-auth.guard.ts">
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-
-@Injectable()
-export class LocalAuthGuard extends AuthGuard('local') {}
-</FILE>
-<FILE path="/home/travis/Projects/database/src/logger/custom-logger.ts">
-import { ConsoleLogger, Injectable, Inject } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-
-@Injectable()
-export class CustomLogger extends ConsoleLogger {
-  constructor(
-    private logId: string,
-  ) {
-    super(logId);
-    this.setLogLevels(['log', 'error', 'warn', 'debug', 'verbose']);
-  }
-
-  log(message: string, context?: string) {
-    this.printMessage(message, 'log', context);
-    // this.emitLogEvent('log', message);
-  }
-
-  warn(message: string, context?: string) {
-    this.printMessage(message, 'warn', context);
-    // this.emitLogEvent('warn', message);
-  }
-
-  error(message: string, trace?: string, context?: string) {
-    this.printMessage(message, 'error', context);
-    // this.emitLogEvent('error', message);
-    if (trace) {
-      this.printMessage(trace, 'error', context);
-    }
-  }
-
-  debug(message: string, context?: string) {
-    this.printMessage(message, 'debug', context);
-  }
-
-  verbose(message: string, context?: string) {
-    this.printMessage(message, 'verbose', context);
-  }
-
-  private printMessage(message: string, logLevel: string, context?: string) {
-    const output = context ? `[${context}] ${message}` : message;
-    console.log(`[${this.getNow()}] [${logLevel.toUpperCase()}] [${this.logId}] ${output}`);
-  }
-
-  private getNow(): string {
-    return new Date().toISOString();
-  }
-
-  static write_to_file(message: string) {
-    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
-    fs.appendFile(logFile, message, (err) => {
-      if (err) {
-        console.error('Failed to write to log file:', err);
-      }
-    });
-  }
-
-  static clearSTDOUT() {
-    const logFile = path.join(process.cwd(), 'start:dev.stdout.txt');
-    try {
-      fs.writeFileSync(logFile, '');
-      console.log(`Log file cleared at ${logFile}`);
-    } catch (error) {
-      console.error('Failed to clear log file:', error);
-    }
-  }
-}
-</FILE>
-<FILE path="/home/travis/Projects/database/test/check-db-permission-create.test.ts">
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:6969';
-const user1 = { username: 'testuser1_perm', password: 'testpassword1' };
-const user2 = { username: 'testuser2_perm', password: 'testpassword2' };
-let token1: string;
-let token2: string;
-
-async function createUserAndLogin(username: string, password: string): Promise<string> {
-  console.log(`Creating user or logging in for ${username}...`);
-  try {
-    await axios.post(`${BASE_URL}/storage/user`, { username, password });
-    console.log(`User ${username} created successfully.`);
-  } catch (error) {
-    console.log(`User ${username} already exists, proceeding to login.`);
-  }
-
-  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
-  return loginResponse.data.access_token;
+async function bootstrap(logger: CustomLogger) {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger });
+  await app.listen(6969);
+  console.log('Database is running: http://localhost:6969');
 }
 
-async function assignUserToDatabase(token: string, dbIndex: number): Promise<boolean> {
-  try {
-    await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log(`User assigned to database ${dbIndex} successfully.`);
-    return true;
-  } catch (error) {
-    console.log(`Failed to assign user to database ${dbIndex}: ${error.response?.data}`);
-    return false;
-  }
-}
+// Create the CustomLogger with the AmqpConnection
+const logger = new CustomLogger('Bootstrap');
 
-async function testDatabasePermissions() {
-  console.log('Testing database permissions...');
-
-  // Test assigning to a new database
-  const assignResult1 = await assignUserToDatabase(token1, 10);
-  if (assignResult1) {
-    console.log('Test passed: User1 successfully assigned to database 10.');
-  } else {
-    console.error('Test failed: User1 could not be assigned to database 10.');
-  }
-
-  // Test assigning to the same database with a different user (should fail)
-  const assignResult2 = await assignUserToDatabase(token2, 10);
-  if (!assignResult2) {
-    console.log('Test passed: User2 correctly denied assignment to database 10.');
-  } else {
-    console.error('Test failed: User2 was incorrectly assigned to database 10.');
-  }
-
-  // Test assigning User2 to a different database
-  const assignResult3 = await assignUserToDatabase(token2, 11);
-  if (assignResult3) {
-    console.log('Test passed: User2 successfully assigned to database 11.');
-  } else {
-    console.error('Test failed: User2 could not be assigned to database 11.');
-  }
-
-  // Verify database assignments
-  const user1Databases = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token1}` }
-  });
-  console.log('User1 databases:', user1Databases.data);
-
-  const user2Databases = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token2}` }
-  });
-  console.log('User2 databases:', user2Databases.data);
-
-  if (user1Databases.data.includes(10) && !user1Databases.data.includes(11) &&
-      user2Databases.data.includes(11) && !user2Databases.data.includes(10)) {
-    console.log('Test passed: Database assignments are correct for both users.');
-  } else {
-    console.error('Test failed: Database assignments are incorrect.');
-  }
-}
-
-async function runTests() {
-  try {
-    token1 = await createUserAndLogin(user1.username, user1.password);
-    token2 = await createUserAndLogin(user2.username, user2.password);
-
-    await testDatabasePermissions();
-    console.log('All permission tests completed.');
-  } catch (error) {
-    console.error('An error occurred during testing:', error.message);
-  }
-}
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test/check-db-permission-delete.test.ts">
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:6969';
-const user1 = { username: 'testuser1_del_perm', password: 'testpassword1' };
-const user2 = { username: 'testuser2_del_perm', password: 'testpassword2' };
-let token1: string;
-let token2: string;
-
-async function createUserAndLogin(username: string, password: string): Promise<string> {
-  console.log(`Creating user or logging in for ${username}...`);
-  try {
-    await axios.post(`${BASE_URL}/storage/user`, { username, password });
-    console.log(`User ${username} created successfully.`);
-  } catch (error) {
-    console.log(`User ${username} already exists, proceeding to login.`);
-  }
-
-  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
-  return loginResponse.data.access_token;
-}
-
-async function assignUserToDatabase(token: string, dbIndex: number): Promise<boolean> {
-  try {
-    await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log(`User assigned to database ${dbIndex} successfully.`);
-    return true;
-  } catch (error) {
-    console.log(`Failed to assign user to database ${dbIndex}: ${error.response?.data}`);
-    return false;
-  }
-}
-
-async function deleteDatabase(token: string, dbIndex: number): Promise<boolean> {
-  try {
-    await axios.delete(`${BASE_URL}/storage/database/${dbIndex}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log(`Database ${dbIndex} deleted successfully.`);
-    return true;
-  } catch (error) {
-    console.log(`Failed to delete database ${dbIndex}: ${error.response?.data}`);
-    return false;
-  }
-}
-
-async function testDatabaseDeletionPermissions() {
-  console.log('Testing database deletion permissions...');
-
-  // Assign User1 to database 20
-  await assignUserToDatabase(token1, 20);
-
-  // Assign User2 to database 21
-  await assignUserToDatabase(token2, 21);
-
-  // Test User2 trying to delete User1's database (should fail)
-  const deleteResult2 = await deleteDatabase(token2, 20);
-  if (!deleteResult2) {
-    console.log('Test passed: User2 correctly denied deletion of User1\'s database (20).');
-  } else {
-    console.error('Test failed: User2 incorrectly allowed to delete User1\'s database (20).');
-  }
-
-  // Test User1 trying to delete User2's database (should fail)
-  const deleteResult4 = await deleteDatabase(token1, 21);
-  if (!deleteResult4) {
-    console.log('Test passed: User1 correctly denied deletion of User2\'s database (21).');
-  } else {
-    console.error('Test failed: User1 incorrectly allowed to delete User2\'s database (21).');
-  }
-
-  // Verify database assignments after attempted deletions
-  const user1DatabasesA = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token1}` }
-  });
-  console.log('User1 databases after attempted deletions:', user1DatabasesA.data);
-
-  const user2DatabasesA = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token2}` }
-  });
-  console.log('User2 databases after attempted deletions:', user2DatabasesA.data);
-
-  // Test User1 deleting their own database (should succeed)
-  const deleteResult1 = await deleteDatabase(token1, 20);
-  if (deleteResult1) {
-    console.log('Test passed: User1 successfully deleted their own database (20).');
-  } else {
-    console.error('Test failed: User1 could not delete their own database (20).');
-  }
-  
-  // Test User2 deleting their own database (should succeed)
-  const deleteResult3 = await deleteDatabase(token2, 21);
-  if (deleteResult3) {
-    console.log('Test passed: User2 successfully deleted their own database (21).');
-  } else {
-    console.error('Test failed: User2 could not delete their own database (21).');
-  }
-
-  // Verify database assignments after deletions
-  const user1Databases = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token1}` }
-  });
-  console.log('User1 databases after deletions:', user1Databases.data);
-
-  const user2Databases = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token2}` }
-  });
-  console.log('User2 databases after deletions:', user2Databases.data);
-
-  if (!user1Databases.data.includes(20) && !user2Databases.data.includes(21)) {
-    console.log('Test passed: Database assignments are correct after deletions.');
-  } else {
-    console.error('Test failed: Database assignments are incorrect after deletions.');
-  }
-
-  if (user1DatabasesA.data.includes(20) && user2DatabasesA.data.includes(21)) {
-    console.log('Test passed: Database assignments are correct after attempted deletions.');
-  } else {
-    console.error('Test failed: Database assignments are incorrect after deletions.');
-  }
-}
-
-async function runTests() {
-  try {
-    token1 = await createUserAndLogin(user1.username, user1.password);
-    token2 = await createUserAndLogin(user2.username, user2.password);
-
-    await testDatabaseDeletionPermissions();
-    console.log('All database deletion permission tests completed.');
-  } catch (error) {
-    console.error('An error occurred during testing:', error.message);
-  }
-}
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test/delete-database.test.ts">
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:6969';
-const username = 'testuser_delete_db';
-const password = 'testpassword';
-let token: string;
-
-async function createUserAndLogin() {
-  console.log('Creating user or logging in...');
-  try {
-    await axios.post(`${BASE_URL}/storage/user`, { username, password });
-    console.log('User created successfully.');
-  } catch (error) {
-    console.log('User already exists, proceeding to login.');
-  }
-
-  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
-  token = loginResponse.data.access_token;
-}
-
-async function assignUserToDatabase(dbIndex: number) {
-  console.log(`Assigning user to database ${dbIndex}...`);
-  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-
-async function testDeleteDatabase() {
-  console.log('Testing delete database operation...');
-
-  // Assign user to database 3
-  await assignUserToDatabase(3);
-
-  // Set a key in the database
-  const setResponse = await axios.post(`${BASE_URL}/storage/set/3/testkey`, { value: 'testvalue' }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('Set response status:', setResponse.status);
-  console.log('Set response text:', setResponse.data);
-
-  // Get the key to verify it's set
-  const getResponse = await axios.get(`${BASE_URL}/storage/get/3/testkey`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('Get response status:', getResponse.status);
-  console.log('Get response text:', getResponse.data);
-
-  // Delete the database
-  const deleteResponse = await axios.delete(`${BASE_URL}/storage/database/3`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('Delete database response status:', deleteResponse.status);
-  console.log('Delete database response text:', deleteResponse.data);
-
-  // Try to get the key again, should fail or return null
-  try {
-    const getAfterDeleteResponse = await axios.get(`${BASE_URL}/storage/get/3/testkey`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log('Get after delete response status:', getAfterDeleteResponse.status);
-    console.log('Get after delete response text:', getAfterDeleteResponse.data);
-  } catch (error) {
-    console.log('Get after delete failed as expected:', error.response.status);
-  }
-
-  // List databases to verify the deleted database is not present
-  const listDatabasesResponse = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('List databases response status:', listDatabasesResponse.status);
-  console.log('List databases response text:', listDatabasesResponse.data);
-}
-
-async function runTests() {
-  try {
-    await createUserAndLogin();
-    await testDeleteDatabase();
-    console.log('All delete database tests completed successfully.');
-  } catch (error) {
-    console.error('An error occurred during testing:', error.message);
-  }
-}
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test/info-database.test.ts">
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:6969';
-const username = 'testuser_db_info';
-const password = 'testpassword';
-let token: string;
-
-async function createUserAndLogin() {
-  console.log('Creating user or logging in...');
-  try {
-    await axios.post(`${BASE_URL}/storage/user`, { username, password });
-    console.log('User created successfully.');
-  } catch (error) {
-    console.log('User already exists, proceeding to login.');
-  }
-
-  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
-  token = loginResponse.data.access_token;
-}
-
-async function assignUserToDatabase(dbIndex: number) {
-  console.log(`Assigning user to database ${dbIndex}...`);
-  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-
-async function testDatabaseInfo() {
-  console.log('Testing database info operation...');
-
-  // Assign user to database 5
-  await assignUserToDatabase(5);
-
-  // Set some data in the database
-  await axios.post(`${BASE_URL}/storage/set/5/testkey1`, { value: 'testvalue1' }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  await axios.post(`${BASE_URL}/storage/set/5/testkey2`, { value: 'testvalue2' }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  // Get database info
-  const dbInfoResponse = await axios.get(`${BASE_URL}/storage/database/5/info`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('Database info response status:', dbInfoResponse.status);
-  console.log('Database info response data:', dbInfoResponse.data);
-
-  // Verify database info
-  if (dbInfoResponse.data.keyCount === 2) {
-    console.log('Database info test passed: Key count matches.');
-  } else {
-    console.error('Database info test failed: Key count does not match.');
-  }
-
-  if (typeof dbInfoResponse.data.sizeInBytes === 'number' && dbInfoResponse.data.sizeInBytes > 0) {
-    console.log('Database info test passed: Size in bytes is a positive number.');
-  } else {
-    console.error('Database info test failed: Size in bytes is not a positive number.');
-  }
-}
-
-async function runTests() {
-  try {
-    await createUserAndLogin();
-    await testDatabaseInfo();
-    console.log('All database info tests completed successfully.');
-  } catch (error) {
-    console.error('An error occurred during testing:', error.message);
-  }
-}
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test/list-database.test.ts">
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:6969';
-const username = 'testuser_list_db';
-const password = 'testpassword';
-let token: string;
-
-async function createUserAndLogin() {
-  console.log('Creating user or logging in...');
-  try {
-    await axios.post(`${BASE_URL}/storage/user`, { username, password });
-    console.log('User created successfully.');
-  } catch (error) {
-    console.log('User already exists, proceeding to login.');
-  }
-
-  const loginResponse = await axios.post(`${BASE_URL}/storage/login`, { username, password });
-  token = loginResponse.data.access_token;
-}
-
-async function assignUserToDatabase(dbIndex: number) {
-  console.log(`Assigning user to database ${dbIndex}...`);
-  await axios.post(`${BASE_URL}/storage/assign-db`, { dbIndex }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-}
-
-async function testListDatabases() {
-  console.log('Testing list databases operation...');
-
-  // Assign user to multiple databases
-  await assignUserToDatabase(1);
-  await assignUserToDatabase(2);
-  await assignUserToDatabase(3);
-
-  // List databases
-  const listDatabasesResponse = await axios.get(`${BASE_URL}/storage/databases`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('List databases response status:', listDatabasesResponse.status);
-  console.log('List databases response data:', listDatabasesResponse.data);
-
-  // Verify the response
-  const databases = listDatabasesResponse.data;
-  if (databases.includes(1) && databases.includes(2) && databases.includes(3)) {
-    console.log('List databases test passed: All assigned databases are present.');
-  } else {
-    console.error('List databases test failed: Not all assigned databases are present.');
-  }
-
-  // Test database info
-  console.log('Testing get database info...');
-  const dbInfoResponse = await axios.get(`${BASE_URL}/storage/database/1/info`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('Database info response status:', dbInfoResponse.status);
-  console.log('Database info response data:', dbInfoResponse.data);
-
-  // Test user info
-  console.log('Testing get user info...');
-  const userInfoResponse = await axios.get(`${BASE_URL}/storage/user/info`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  console.log('User info response status:', userInfoResponse.status);
-  console.log('User info response data:', userInfoResponse.data);
-}
-
-async function runTests() {
-  try {
-    await createUserAndLogin();
-    await testListDatabases();
-    console.log('All list database tests completed successfully.');
-  } catch (error) {
-    console.error('An error occurred during testing:', error.message);
-  }
-}
-
-runTests();
-</FILE>
-<FILE path="/home/travis/Projects/database/test:check-db-permission-create.stdout.txt">
-Creating user or logging in for testuser1_perm...
-User testuser1_perm already exists, proceeding to login.
-Creating user or logging in for testuser2_perm...
-User testuser2_perm already exists, proceeding to login.
-Testing database permissions...
-User assigned to database 10 successfully.
-Test passed: User1 successfully assigned to database 10.
-Failed to assign user to database 10: [object Object]
-Test passed: User2 correctly denied assignment to database 10.
-User assigned to database 11 successfully.
-Test passed: User2 successfully assigned to database 11.
-User1 databases: [ 10 ]
-User2 databases: [ 11 ]
-Test passed: Database assignments are correct for both users.
-All permission tests completed.
+bootstrap(logger);
 
 </FILE>
-<FILE path="/home/travis/Projects/database/test:check-db-permission-delete.stdout.txt">
-Creating user or logging in for testuser1_del_perm...
-User testuser1_del_perm already exists, proceeding to login.
-Creating user or logging in for testuser2_del_perm...
-User testuser2_del_perm already exists, proceeding to login.
-Testing database deletion permissions...
-User assigned to database 20 successfully.
-User assigned to database 21 successfully.
-Failed to delete database 20: [object Object]
-Test passed: User2 correctly denied deletion of User1's database (20).
-Failed to delete database 21: [object Object]
-Test passed: User1 correctly denied deletion of User2's database (21).
-User1 databases after attempted deletions: [ 20 ]
-User2 databases after attempted deletions: [ 21 ]
-Database 20 deleted successfully.
-Test passed: User1 successfully deleted their own database (20).
-Database 21 deleted successfully.
-Test passed: User2 successfully deleted their own database (21).
-User1 databases after deletions: []
-User2 databases after deletions: []
-Test passed: Database assignments are correct after deletions.
-Test passed: Database assignments are correct after attempted deletions.
-All database deletion permission tests completed.
+<FILE path="/home/travis/Projects/database/examples/example:set-and-get-value.stdout.txt">
+value
 
 </FILE>
-<FILE path="/home/travis/Projects/database/test:delete-database.stdout.txt">
+<FILE path="/home/travis/Projects/database/test:session-cache.stdout.txt">
 Creating user or logging in...
 User created successfully.
-Testing delete database operation...
-Assigning user to database 3...
-Set response status: 201
-Set response text: OK
-Get response status: 200
-Get response text: testvalue
-Delete database response status: 200
-Delete database response text: Database deleted successfully
-Get after delete failed as expected: 401
-List databases response status: 200
-List databases response text: []
-All delete database tests completed successfully.
+Assigning user to database 2...
+Testing session set operation...
+Session set response status: 201
+Session set response text: OK
+Testing session get operation...
+Session get response status: 200
+Session get response text: sessionvalue
+Testing session delete operation...
+Session delete response status: 201
+Session delete response text: 1
+Verifying session key deletion...
+Get deleted session key status: 200
+Get deleted session key text: 
+Testing session expiration...
+Waiting for 3 seconds...
+Get expired session key status: 200
+Get expired session key text: expiringvalue
+All session cache tests completed successfully.
 
 </FILE>
-<FILE path="/home/travis/Projects/database/test:info-database.stdout.txt">
-Creating user or logging in...
-User already exists, proceeding to login.
-Testing database info operation...
-Assigning user to database 5...
-Database info response status: 200
-Database info response data: { keyCount: 2, sizeInBytes: 57 }
-Database info test passed: Key count matches.
-Database info test passed: Size in bytes is a positive number.
-All database info tests completed successfully.
+<FILE path="/home/travis/Projects/database/dist/examples/session-cache.d.ts">
+export {};
 
 </FILE>
-<FILE path="test/check-record-permission-crud.test.ts" TARGET>
-(empty file)
+<FILE path="/home/travis/Projects/database/dist/src/storage/storage.service.d.ts">
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+export declare class StorageService implements OnModuleInit, OnModuleDestroy {
+    private jwtService;
+    private databases;
+    private users;
+    private walFile;
+    private snapshotFile;
+    private usersFile;
+    private walStream;
+    constructor(jwtService: JwtService);
+    onModuleInit(): Promise<void>;
+    onModuleDestroy(): Promise<void>;
+    private loadSnapshot;
+    private loadUsers;
+    private replayWAL;
+    private appendToWAL;
+    private createSnapshot;
+    private saveUsers;
+    createUser(username: string, password: string): Promise<string>;
+    validateUser(username: string, password: string): Promise<any>;
+    login(user: any): Promise<{
+        access_token: string;
+    }>;
+    assignUserToDatabase(username: string, dbIndex: number): Promise<void>;
+    private getDatabase;
+    private checkUserAccess;
+    rpush(username: string, dbIndex: number, key: string, ...values: string[]): Promise<number>;
+    lrange(username: string, dbIndex: number, key: string, start: number, stop: number): string[];
+    lpop(username: string, dbIndex: number, key: string): Promise<string | null>;
+    llen(username: string, dbIndex: number, key: string): number;
+    set(username: string, dbIndex: number, key: string, value: string): Promise<'OK'>;
+    get(username: string, dbIndex: number, key: string): string | null;
+    incr(username: string, dbIndex: number, key: string): Promise<number>;
+    sadd(username: string, dbIndex: number, key: string, ...members: string[]): Promise<number>;
+    smembers(username: string, dbIndex: number, key: string): string[];
+    sismember(username: string, dbIndex: number, key: string, member: string): boolean;
+    del(username: string, dbIndex: number, ...keys: string[]): Promise<number>;
+    exists(username: string, dbIndex: number, ...keys: string[]): number;
+    expire(username: string, dbIndex: number, key: string, seconds: number): Promise<boolean>;
+    triggerSnapshot(): Promise<void>;
+    generateSnapshot(): Promise<void>;
+    deleteDatabase(username: string, dbIndex: number): Promise<void>;
+    getDatabaseInfo(username: string, dbIndex: number): Promise<any>;
+    getUserInfo(username: string): Promise<any>;
+    listDatabases(username: string): Promise<number[]>;
+    listUsers(username: string): Promise<string[]>;
+}
+
+</FILE>
+<FILE path="/home/travis/Projects/database/dist/src/auth/jwt-auth.guard.d.ts">
+declare const JwtAuthGuard_base: import("@nestjs/passport").Type<import("@nestjs/passport").IAuthGuard>;
+export declare class JwtAuthGuard extends JwtAuthGuard_base {
+}
+export {};
+
+</FILE>
+<FILE path="/home/travis/Projects/database/dist/src/auth/local-auth.guard.d.ts">
+declare const LocalAuthGuard_base: import("@nestjs/passport").Type<import("@nestjs/passport").IAuthGuard>;
+export declare class LocalAuthGuard extends LocalAuthGuard_base {
+}
+export {};
+
+</FILE>
+<FILE path="examples/session-cache.ts" TARGET>
+import { DatabaseClient } from "../client/index";
+
+const database = new DatabaseClient('http://localhost:6969');
+
+async function main() {
+  try {
+    console.log('Creating user or logging in...');
+    await database.createUser('sessionuser', 'sessionpass');
+
+    await database.login('sessionuser', 'sessionpass');
+    console.log('Logged in successfully.');
+
+    console.log('Assigning user to database 3...');
+    await database.assignUserToDatabase(3);
+
+    // Simulating a session
+    const sessionId = 'user123_session';
+    
+    console.log('Setting session data...');
+    await database.set(3, sessionId, JSON.stringify({
+      userId: 'user123',
+      lastAccess: new Date().toISOString(),
+      data: {
+        cart: ['item1', 'item2'],
+        preferences: { theme: 'dark' }
+      }
+    }));
+
+    console.log('Setting session expiration...');
+    await database.expire(3, sessionId, 3600); // Expire in 1 hour
+
+    console.log('Retrieving session data...');
+    const sessionData = await database.get(3, sessionId);
+    console.log('Session data:', sessionData);
+
+    console.log('Updating session data...');
+    const updatedSessionData = JSON.parse(sessionData);
+    updatedSessionData.data.cart.push('item3');
+    await database.set(3, sessionId, JSON.stringify(updatedSessionData));
+
+    console.log('Retrieving updated session data...');
+    const updatedData = await database.get(3, sessionId);
+    console.log('Updated session data:', updatedData);
+
+    console.log('Simulating session logout...');
+    await database.del(3, [sessionId]);
+
+    console.log('Verifying session deletion...');
+    const deletedSession = await database.get(3, sessionId);
+    console.log('Deleted session data:', deletedSession);
+
+    console.log('Cleaning up database...');
+    await database.deleteDatabase(3);
+
+    console.log('Session cache demonstration completed successfully.');
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+}
+
+main();
 </FILE>
 <REQUEST>
-should function like the other tests
+just like the other example except it demonstrates a session cache; it should use the same methods as session-cache.test.ts
 </REQUEST>
