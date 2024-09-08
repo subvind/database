@@ -4,12 +4,24 @@ database
 ## Project setup
 
 ```bash
-$ npm install
+# within a project:
+$ npm install subvind/database
 ```
 
-## Compile and run the project
+```ts
+// within a file:
+import { DatabaseClient } from 'database/client';
+
+// examples:
+// https://github.com/subvind/database/tree/main/examples
+```
+
+## Install compile and run the project
 
 ```bash
+# requirements
+$ npm install
+
 # development
 $ npm run start
 
