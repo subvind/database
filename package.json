@@ -4,6 +4,7 @@
   "description": "",
   "author": "Travis Burandt",
   "main": "client/index.ts",
+  "type": "module",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
