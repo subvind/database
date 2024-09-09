@@ -1,16 +1,39 @@
-c[[90m7:21:23 PM[0m] Starting compilation in watch mode...
+c[[90m9:50:06 PM[0m] Starting compilation in watch mode...
 
-[[90m7:21:25 PM[0m] Found 0 errors. Watching for file changes.
+[[90m9:50:07 PM[0m] Found 0 errors. Watching for file changes.
 
-file:///home/travis/Projects/database/dist/src/main.js:2
-Object.defineProperty(exports, "__esModule", { value: true });
-                      ^
-
-ReferenceError: exports is not defined in ES module scope
-This file is being treated as an ES module because it has a '.js' file extension and '/home/travis/Projects/database/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-    at file:///home/travis/Projects/database/dist/src/main.js:2:23
-    at ModuleJob.run (node:internal/modules/esm/module_job:222:25)
-    at async ModuleLoader.import (node:internal/modules/esm/loader:316:24)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:123:5)
-
-Node.js v20.16.0
+[2024-09-09T02:50:08.103Z] [LOG] [Bootstrap] [NestFactory] Starting Nest application...
+[2024-09-09T02:50:08.113Z] [LOG] [Bootstrap] [InstanceLoader] AppModule dependencies initialized
+[2024-09-09T02:50:08.113Z] [LOG] [Bootstrap] [InstanceLoader] PassportModule dependencies initialized
+[2024-09-09T02:50:08.113Z] [LOG] [Bootstrap] [InstanceLoader] JwtModule dependencies initialized
+[2024-09-09T02:50:08.113Z] [LOG] [Bootstrap] [InstanceLoader] DiscoveryModule dependencies initialized
+[2024-09-09T02:50:08.114Z] [LOG] [Bootstrap] [InstanceLoader] ScheduleModule dependencies initialized
+[2024-09-09T02:50:08.114Z] [LOG] [Bootstrap] [InstanceLoader] AuthModule dependencies initialized
+[2024-09-09T02:50:08.114Z] [LOG] [Bootstrap] [InstanceLoader] StorageModule dependencies initialized
+[2024-09-09T02:50:08.117Z] [LOG] [Bootstrap] [RoutesResolver] StorageController {/storage}:
+[2024-09-09T02:50:08.118Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user, POST} route
+[2024-09-09T02:50:08.119Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/login, POST} route
+[2024-09-09T02:50:08.119Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/assign-db, POST} route
+[2024-09-09T02:50:08.120Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/rpush/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.120Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lrange/:dbIndex/:key, GET} route
+[2024-09-09T02:50:08.120Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/lpop/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.120Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/llen/:dbIndex/:key, GET} route
+[2024-09-09T02:50:08.120Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/snapshot, POST} route
+[2024-09-09T02:50:08.121Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/set/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.121Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/get/:dbIndex/:key, GET} route
+[2024-09-09T02:50:08.121Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/incr/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.121Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sadd/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.121Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/smembers/:dbIndex/:key, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/sismember/:dbIndex/:key/:member, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/del/:dbIndex, POST} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/exists/:dbIndex, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/expire/:dbIndex/:key, POST} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex, DELETE} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/database/:dbIndex/info, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/user/info, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/databases, GET} route
+[2024-09-09T02:50:08.122Z] [LOG] [Bootstrap] [RouterExplorer] Mapped {/storage/users, GET} route
+[2024-09-09T02:50:08.131Z] [LOG] [Bootstrap] [NestApplication] Nest application successfully started
+Database is running: http://localhost:6969
+Generating snapshot...
+Snapshot generated successfully.
