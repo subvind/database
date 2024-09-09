@@ -1,4 +1,4 @@
-import { DatabaseClient } from "../client/index";
+import { DatabaseClient } from "../client/index.js";
 
 const database = new DatabaseClient('http://localhost:6969');
 
